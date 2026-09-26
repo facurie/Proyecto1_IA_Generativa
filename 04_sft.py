@@ -36,6 +36,7 @@ import environment  # noqa: F401  (primero siempre: caché de HF, stdout UTF-8, 
 
 environment.summary()
 
+import hashlib
 import json
 import math
 import os
@@ -226,6 +227,13 @@ VOCAB_SIZE = tokenizer.get_vocab_size()
 EOT_ID = tokenizer.token_to_id("<|endoftext|>")
 
 base_model, base_ckpt = load_model(BASE_PATH)
+# Los checkpoints viejos no traen la huella: se aceptan, pero sin poder confirmar el tokenizer.
+TOKENIZER_SHA1 = hashlib.sha1(TOKENIZER_PATH.read_bytes()).hexdigest()
+if base_ckpt.get("tokenizer_sha1", TOKENIZER_SHA1) != TOKENIZER_SHA1:
+    raise ValueError(
+        f"{BASE_PATH.name} se entrenó con otro tokenizer.json (¿se volvió a correr la Etapa 1?). "
+        "Usá el tokenizer original o reentrená la Etapa 2."
+    )
 MODEL_CFG = base_model.cfg
 BLOCK_SIZE = MODEL_CFG.block_size
 assert MODEL_CFG.vocab_size == VOCAB_SIZE, "el checkpoint base y el tokenizer no son del mismo vocabulario"
@@ -623,6 +631,7 @@ def save_checkpoint(path, model, *, step, cfg, history, extra):
         "history": history,
         "samples": {},
         "base_checkpoint": str(BASE_PATH.name),
+        "tokenizer_sha1": TOKENIZER_SHA1,
         **extra,
     }
     tmp = path.with_suffix(".tmp")
