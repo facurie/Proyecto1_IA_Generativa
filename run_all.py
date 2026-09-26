@@ -89,9 +89,31 @@ def check_modules() -> None:
 
 
 def has_cuda() -> bool:
-    import torch
-
-    return torch.cuda.is_available()
+    """
+    Se chequea en un proceso aparte y con límite de tiempo: con algunos drivers (sobre todo laptops con
+    GPU híbrida) inicializar CUDA puede colgarse, o un proceso de Python anterior quedó trabado y tiene la
+    GPU tomada. Así el script avisa en lugar de quedarse mudo para siempre.
+    """
+    say("Chequeando la GPU (hasta 90 s)...")
+    code = "import torch; print('CUDA', torch.cuda.is_available(), flush=True)"
+    try:
+        r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=90)
+        out = r.stdout
+    except subprocess.TimeoutExpired as e:
+        out = e.stdout.decode() if isinstance(e.stdout, bytes) else (e.stdout or "")
+        if "CUDA True" in out:
+            say("AVISO: CUDA anda, pero el proceso de prueba no terminó al cerrarse (problema del driver al salir).")
+            say("       Se sigue igual; si una etapa no termina, avisá.")
+            return True
+        sys.exit(
+            "La GPU no respondió en 90 s. Lo más común: quedó un proceso de Python colgado usándola.\n"
+            "  1. Mirá qué la está usando:   nvidia-smi   y   ps aux | grep python\n"
+            "  2. Matá los procesos colgados: kill -9 <PID>   (o reiniciá la máquina)\n"
+            "  3. Volvé a correr este script."
+        )
+    if "CUDA" not in out:
+        sys.exit(f"No se pudo importar torch:\n{r.stderr[-2000:]}")
+    return "CUDA True" in out
 
 
 def check_huggingface() -> None:
@@ -228,6 +250,7 @@ def main() -> int:
     args = ap.parse_args()
 
     os.chdir(ROOT)  # las etapas usan rutas relativas a la raíz del repositorio
+    say("Preparando la corrida...")
     check_python()
     check_modules()
     cuda = has_cuda()
