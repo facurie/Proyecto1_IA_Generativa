@@ -663,6 +663,9 @@ def finetune(name: str, cfg: SFTConfig, path) -> tuple[GPTLanguageModel, list[di
     if DEVICE == "cuda":
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
+    # Lo que ya ocupa la GPU antes del primer paso: este modelo, el base y, en la corrida de LoRA, también el
+    # de SFT completo. Se resta del pico para comparar solo lo que agrega entrenar, sin ese sesgo.
+    resident = torch.cuda.memory_allocated() if DEVICE == "cuda" else 0
     history = []
     train_time = 0.0
     model.train()
@@ -694,13 +697,14 @@ def finetune(name: str, cfg: SFTConfig, path) -> tuple[GPTLanguageModel, list[di
             torch.cuda.synchronize()
         train_time += time.perf_counter() - t0
 
-    # Memoria: el pico medido en la GPU, y además la cuenta analítica de lo que depende de qué se entrena:
-    # gradientes (1 por parámetro entrenable) + los dos momentos de AdamW, en float32.
+    # Memoria: el pico medido en la GPU por encima de lo residente (activaciones + gradientes + AdamW), y la
+    # cuenta analítica de la parte que depende de qué se entrena: gradientes (1 por parámetro entrenable) + los
+    # dos momentos de AdamW, en float32. Si el pico casi no cambia entre completo y LoRA, dominan las activaciones.
     cost = {
         **counts,
         "fracción entrenable": counts["entrenables"] / counts["total"],
         "grad + AdamW (MB, analítico)": 3 * counts["entrenables"] * 4 / 1e6,
-        "memoria pico GPU (MB)": torch.cuda.max_memory_allocated() / 1e6 if DEVICE == "cuda" else float("nan"),
+        "memoria pico GPU al entrenar (MB)": (torch.cuda.max_memory_allocated() - resident) / 1e6 if DEVICE == "cuda" else float("nan"),
         "segundos por paso": train_time / cfg.max_steps,
     }
 
@@ -916,7 +920,7 @@ Completar después de **la corrida completa**; lo que sale con `SMOKE_TEST` solo
    sugiere que el contexto largo es cosa de profundidad, y usar una palabra pedida 100 tokens antes es
    justamente contexto).
 3. **LoRA: ¿qué fracción de los parámetros entrenaron, y cuánto de la mejora compró?** Usen
-   `costo_lora.csv` (fracción entrenable, memoria pico, segundos por paso) y la columna `LoRA / completo`
+   `costo_lora.csv` (fracción entrenable, memoria pico al entrenar, segundos por paso) y la columna `LoRA / completo`
    de `comparacion_lora.csv`. Tengan en cuenta qué *no* toca LoRA acá: embeddings, MLP y `lm_head` quedan
    congelados, así que todo lo que aprenda tiene que pasar por *cómo se mira el contexto*. ¿Les alcanza
    eso para la forma? ¿Y para el contenido? ¿Y la memoria: el ahorro en gradientes + AdamW se nota en el
