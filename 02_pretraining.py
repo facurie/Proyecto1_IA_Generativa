@@ -24,6 +24,7 @@ import environment  # noqa: F401  (primero siempre: caché de HF, stdout UTF-8, 
 
 environment.summary()
 
+import hashlib
 import math
 import os
 import re
@@ -41,7 +42,7 @@ from torch.nn import functional as F
 from data import load_tinystories
 
 DEVICE = environment.device()
-SMOKE_TEST = DEVICE == "cpu"  # CPU: validar el pipeline. GPU: la corrida de verdad. Se puede forzar a mano.
+SMOKE_TEST = environment.smoke_test(DEVICE == "cpu")  # CPU: validar el pipeline. GPU: la corrida de verdad. LAB_SMOKE_TEST fuerza.
 SEED = 1337
 
 CKPT_DIR = environment.CHECKPOINTS / "smoke" if SMOKE_TEST else environment.CHECKPOINTS
@@ -75,6 +76,9 @@ if not TOKENIZER_PATH.is_file():
 tokenizer = Tokenizer.from_file(str(TOKENIZER_PATH))
 VOCAB_SIZE = tokenizer.get_vocab_size()
 EOT_ID = tokenizer.token_to_id("<|endoftext|>")
+# Huella del tokenizer: va en cada checkpoint. Volver a correr la Etapa 1 pisa tokenizer.json, y un modelo
+# entrenado con otro tokenizer carga sin error pero lee ids que ya no significan lo mismo.
+TOKENIZER_SHA1 = hashlib.sha1(TOKENIZER_PATH.read_bytes()).hexdigest()
 
 N_TRAIN_STORIES = 5_000 if SMOKE_TEST else 400_000
 N_VAL_STORIES = 500 if SMOKE_TEST else 10_000
@@ -416,6 +420,7 @@ def save_checkpoint(path, model, *, step, train_cfg, history, samples, optimizer
         "train_config": asdict(train_cfg),
         "history": history,
         "samples": samples,
+        "tokenizer_sha1": TOKENIZER_SHA1,
     }
     if optimizer is not None:
         checkpoint["optimizer"] = optimizer.state_dict()
@@ -478,6 +483,11 @@ def train(name: str, cfg: GPTConfig, train_cfg: TrainConfig, *, step0_path=None)
         if checkpoint["model_config"] != asdict(cfg) or checkpoint["train_config"] != asdict(train_cfg):
             raise ValueError(
                 f"{path} es de otra configuración. Borralo o renombralo para entrenar de cero con esta."
+            )
+        if checkpoint.get("tokenizer_sha1", TOKENIZER_SHA1) != TOKENIZER_SHA1:
+            raise ValueError(
+                f"{path} se entrenó con otro tokenizer.json (¿se volvió a correr la Etapa 1?). "
+                "Borralo para reentrenar con el tokenizer actual, o traé el tokenizer original."
             )
         model.load_state_dict(checkpoint["state_dict"])
         run.history, run.samples, start = checkpoint["history"], checkpoint["samples"], checkpoint["step"]

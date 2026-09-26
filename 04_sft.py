@@ -36,6 +36,7 @@ import environment  # noqa: F401  (primero siempre: caché de HF, stdout UTF-8, 
 
 environment.summary()
 
+import hashlib
 import json
 import math
 import os
@@ -56,7 +57,7 @@ from torch.nn import functional as F
 from data import load_instruct_records, load_tinystories
 
 DEVICE = environment.device()
-SMOKE_TEST = DEVICE == "cpu"  # CPU: validar el pipeline. GPU: la corrida de verdad. Se puede forzar a mano.
+SMOKE_TEST = environment.smoke_test(DEVICE == "cpu")  # CPU: validar el pipeline. GPU: la corrida de verdad. LAB_SMOKE_TEST fuerza.
 SEED = 1337
 
 CKPT_DIR = environment.CHECKPOINTS / "smoke" if SMOKE_TEST else environment.CHECKPOINTS
@@ -226,6 +227,13 @@ VOCAB_SIZE = tokenizer.get_vocab_size()
 EOT_ID = tokenizer.token_to_id("<|endoftext|>")
 
 base_model, base_ckpt = load_model(BASE_PATH)
+# Los checkpoints viejos no traen la huella: se aceptan, pero sin poder confirmar el tokenizer.
+TOKENIZER_SHA1 = hashlib.sha1(TOKENIZER_PATH.read_bytes()).hexdigest()
+if base_ckpt.get("tokenizer_sha1", TOKENIZER_SHA1) != TOKENIZER_SHA1:
+    raise ValueError(
+        f"{BASE_PATH.name} se entrenó con otro tokenizer.json (¿se volvió a correr la Etapa 1?). "
+        "Usá el tokenizer original o reentrená la Etapa 2."
+    )
 MODEL_CFG = base_model.cfg
 BLOCK_SIZE = MODEL_CFG.block_size
 assert MODEL_CFG.vocab_size == VOCAB_SIZE, "el checkpoint base y el tokenizer no son del mismo vocabulario"
@@ -623,6 +631,7 @@ def save_checkpoint(path, model, *, step, cfg, history, extra):
         "history": history,
         "samples": {},
         "base_checkpoint": str(BASE_PATH.name),
+        "tokenizer_sha1": TOKENIZER_SHA1,
         **extra,
     }
     tmp = path.with_suffix(".tmp")
@@ -663,6 +672,9 @@ def finetune(name: str, cfg: SFTConfig, path) -> tuple[GPTLanguageModel, list[di
     if DEVICE == "cuda":
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
+    # Lo que ya ocupa la GPU antes del primer paso: este modelo, el base y, en la corrida de LoRA, también el
+    # de SFT completo. Se resta del pico para comparar solo lo que agrega entrenar, sin ese sesgo.
+    resident = torch.cuda.memory_allocated() if DEVICE == "cuda" else 0
     history = []
     train_time = 0.0
     model.train()
@@ -694,13 +706,14 @@ def finetune(name: str, cfg: SFTConfig, path) -> tuple[GPTLanguageModel, list[di
             torch.cuda.synchronize()
         train_time += time.perf_counter() - t0
 
-    # Memoria: el pico medido en la GPU, y además la cuenta analítica de lo que depende de qué se entrena:
-    # gradientes (1 por parámetro entrenable) + los dos momentos de AdamW, en float32.
+    # Memoria: el pico medido en la GPU por encima de lo residente (activaciones + gradientes + AdamW), y la
+    # cuenta analítica de la parte que depende de qué se entrena: gradientes (1 por parámetro entrenable) + los
+    # dos momentos de AdamW, en float32. Si el pico casi no cambia entre completo y LoRA, dominan las activaciones.
     cost = {
         **counts,
         "fracción entrenable": counts["entrenables"] / counts["total"],
         "grad + AdamW (MB, analítico)": 3 * counts["entrenables"] * 4 / 1e6,
-        "memoria pico GPU (MB)": torch.cuda.max_memory_allocated() / 1e6 if DEVICE == "cuda" else float("nan"),
+        "memoria pico GPU al entrenar (MB)": (torch.cuda.max_memory_allocated() - resident) / 1e6 if DEVICE == "cuda" else float("nan"),
         "segundos por paso": train_time / cfg.max_steps,
     }
 
@@ -916,7 +929,7 @@ Completar después de **la corrida completa**; lo que sale con `SMOKE_TEST` solo
    sugiere que el contexto largo es cosa de profundidad, y usar una palabra pedida 100 tokens antes es
    justamente contexto).
 3. **LoRA: ¿qué fracción de los parámetros entrenaron, y cuánto de la mejora compró?** Usen
-   `costo_lora.csv` (fracción entrenable, memoria pico, segundos por paso) y la columna `LoRA / completo`
+   `costo_lora.csv` (fracción entrenable, memoria pico al entrenar, segundos por paso) y la columna `LoRA / completo`
    de `comparacion_lora.csv`. Tengan en cuenta qué *no* toca LoRA acá: embeddings, MLP y `lm_head` quedan
    congelados, así que todo lo que aprenda tiene que pasar por *cómo se mira el contexto*. ¿Les alcanza
    eso para la forma? ¿Y para el contenido? ¿Y la memoria: el ahorro en gradientes + AdamW se nota en el

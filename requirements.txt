@@ -52,4 +52,5 @@ requests             # sondear localhost:11434 mientras el servidor de Ollama ar
 # =============================================================================
 psutil       # RAM del proceso, usada por environment.py cuando no hay GPU para consultar
 ipykernel    # permite que VS Code / Jupyter ejecuten los archivos .ipynb generados
+nbclient     # run_all.py: ejecuta los notebooks en orden y guarda las salidas
 ipywidgets   # barras de progreso de tqdm limpias dentro de los notebooks

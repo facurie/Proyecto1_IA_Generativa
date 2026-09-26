@@ -39,7 +39,7 @@ import torch
 from sklearn.decomposition import PCA
 from tokenizers import Tokenizer
 
-SMOKE_TEST = False
+SMOKE_TEST = environment.smoke_test(False)  # LAB_SMOKE_TEST=1 lo activa desde run_all.py
 SEED = 1337
 CKPT_DIR = environment.CHECKPOINTS / "smoke" if SMOKE_TEST else environment.CHECKPOINTS
 TOKENIZER_PATH = environment.CHECKPOINTS / "tokenizer.json"
