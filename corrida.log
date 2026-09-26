@@ -1,0 +1,1791 @@
+nohup: ignoring input
+Preparando la corrida...
+Chequeando la GPU (hasta 90 s)...
+Etapa 1 salteada: ya existe checkpoints/tokenizer.json (usá --reentrenar-tokenizer para rehacerlo).
+
+==============================================================================
+Corrida del pipeline
+==============================================================================
+Python      : 3.14.7 (/home/lucas/Proyecto1_IA_Generativa/.venv/bin/python)
+GPU NVIDIA  : sí
+Modo        : COMPLETO (la corrida larga)
+Etapas      : 0 (Datos (inspección)), 2 (Preentrenamiento + ablación ancho/profundo), 3 (Análisis de embeddings), 4 (SFT completo + LoRA), 5 (Juez local (Ollama + qwen3:4b))
+
+==============================================================================
+Etapa 0 · Datos (inspección)  (00_dataset.ipynb)
+==============================================================================
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+
+--- [00_dataset] celda 1/6 ---
+
+--- [00_dataset] celda 2/6 ---
+==============================================================
+ENTORNO
+==============================================================
+os             : Linux 6.18.48-gentoo-lean
+python         : 3.14.7
+venv           : /home/lucas/Proyecto1_IA_Generativa/.venv
+cpu            : AMD Ryzen 9 8945HX with Radeon Graphics
+logical_cores  : 32
+torch          : 2.14.0+cu130
+torch_threads  : 16
+cuda_available : True
+gpu            : NVIDIA GeForce RTX 5070 Laptop GPU
+gpu_memory_gb  : 8.08
+ram_total_gb   : 32.9
+ram_free_gb    : 29.0
+--------------------------------------------------------------
+HF_HOME        : /home/lucas/Proyecto1_IA_Generativa/.hf_cache
+ca_bundle      : no presente (normal)
+==============================================================
+
+--- [00_dataset] celda 3/6 ---
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Dataset({
+    features: ['text'],
+    num_rows: 1000
+})
+
+--- un cuento crudo ---
+One day, a little girl named Lily found a needle in her room. She knew it was difficult to play with it because it was sharp. Lily wanted to share the needle with her mom, so she could sew a button on her shirt.
+
+Lily went to her mom and said, "Mom, I found this needle. Can you share it with me and sew my shirt?" Her mom smiled and said, "Yes, Lily, we can share the needle and fix your shirt."
+
+Together, they shared the needle and sewed the button on Lily's shirt. It was not difficult for them because they were sharing and helping each other. After they finished, Lily thanked her mom for sharing the needle and fixing her shirt. They both felt happy because they had shared and worked together.
+
+--- [00_dataset] celda 4/6 ---
+registros instruct parseados: 200
+
+--- un registro instruct crudo ---
+Features: Dialogue
+Words: quit, oak, gloomy
+Summary: Sara and Ben were playing in the park, but Sara wanted to go home because it was cold and dark. Ben convinced her to stay and play, but eventually agreed to go home and have hot cocoa.
+Story: 
+
+Sara and Ben were playing in the park. They liked to climb the big oak tree and pretend they were birds. They made nests with leaves and twigs and sang songs.
+But today, the sky was gloomy and the wind was cold. Sara felt sad and cold. She wanted to go home and have some hot cocoa.
+"Ben, I want to quit," she said. "It's too cold and dark. Let's go home."
+Ben looked at Sara and frowned. He liked the oak tree and the park. He wanted to stay and play.
+"No, Sara, don't quit," he said. "It's fun here. Look, there's a squirrel. Let's chase it."
+Sara shook her head. She didn't want to chase the squirrel. She wanted to go home and have some hot cocoa.
+"Please, Ben, let's go home," she said. "We can play here another day. I'm cold and hungry."
+Ben saw that Sara was shivering and looked unhappy. He loved his sister and didn't want her to be sad. He nodded and smiled.
+"Okay, Sara, let's go home," he said. "We can have some hot cocoa and cookies. And we can play with our toys."
+Sara hugged Ben and thanked him. They climbed down the oak tree and ran to their mom, who was waiting for them. They told her about their adventure and asked for some hot cocoa and cookies. Mom smiled and agreed. She was proud of her children for being brave and kind. They went home and had a cozy and happy time.
+
+--- [00_dataset] celda 5/6 ---
+cuentos inspeccionados   : 1000
+palabras/cuento (media)  : 183.8
+palabras/cuento min / max: 61 / 837
+
+--- [00_dataset] celda 6/6 ---
+palabras únicas (aprox.) : 4961
+las 10 más comunes       : [('the', 10260), ('and', 8998), ('to', 6062), ('a', 5521), ('was', 4475), ('she', 3966), ('he', 3901), ('they', 3520), ('it', 3347), ('her', 2365)]
+
+Etapa 0 lista en 0.2 min → outputs/notebooks/00_dataset.ipynb
+
+==============================================================================
+Etapa 2 · Preentrenamiento + ablación ancho/profundo  (02_pretraining.ipynb)
+==============================================================================
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+
+--- [02_pretraining] celda 1/17 ---
+
+--- [02_pretraining] celda 2/17 ---
+==============================================================
+ENTORNO
+==============================================================
+os             : Linux 6.18.48-gentoo-lean
+python         : 3.14.7
+venv           : /home/lucas/Proyecto1_IA_Generativa/.venv
+cpu            : AMD Ryzen 9 8945HX with Radeon Graphics
+logical_cores  : 32
+torch          : 2.14.0+cu130
+torch_threads  : 16
+cuda_available : True
+gpu            : NVIDIA GeForce RTX 5070 Laptop GPU
+gpu_memory_gb  : 8.08
+ram_total_gb   : 32.9
+ram_free_gb    : 29.0
+--------------------------------------------------------------
+HF_HOME        : /home/lucas/Proyecto1_IA_Generativa/.hf_cache
+ca_bundle      : no presente (normal)
+==============================================================
+dispositivo: cuda · SMOKE_TEST: False · AMP: True · checkpoints en: /home/lucas/Proyecto1_IA_Generativa/checkpoints
+
+--- [02_pretraining] celda 3/17 ---
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+vocabulario: 8,192 · <|endoftext|> = id 0
+train: 400,000 cuentos →  88.53M tokens
+val  :  10,000 cuentos →   2.01M tokens
+tokenizado en 73s
+
+--- [02_pretraining] celda 4/17 ---
+
+--- [02_pretraining] celda 5/17 ---
+                                   wide      deep deep / wide
+embeddings (token + posición) 2,162,688 1,622,016       75.0%
+bloques Transformer           1,577,984 2,221,440      140.8%
+salida (ln_f + lm_head)       2,105,856 1,581,440       75.1%
+total                         5,846,528 5,424,896       92.8%
+
+diferencia de tamaño: 7.2%
+pérdida esperada en el paso 0 ≈ ln(V) = 9.01
+
+--- [02_pretraining] celda 6/17 ---
+TrainConfig(max_steps=5000, batch_size=64, eval_interval=250, eval_iters=50, sample_steps=(0, 250, 500, 1000, 2000, 3500, 5000), lr=0.0003, min_lr=3e-05, warmup_steps=100, weight_decay=0.1, grad_clip=1.0)
+tokens vistos por corrida: 81.9M ≈ 0.93 épocas
+
+--- [02_pretraining] celda 7/17 ---
+
+--- [02_pretraining] celda 8/17 ---
+
+--- [02_pretraining] celda 9/17 ---
+[wide] guardado el modelo sin entrenar en pretrain_step0.pt
+[wide] paso     0 | train 9.064 | val 9.063 | ppl   8630.8 |   0.0 min
+[wide] paso   250 | train 3.876 | val 3.903 | ppl     49.5 |   0.4 min
+[wide] paso   500 | train 3.260 | val 3.288 | ppl     26.8 |   0.7 min
+[wide] paso   750 | train 2.993 | val 3.020 | ppl     20.5 |   1.0 min
+[wide] paso 1,000 | train 2.838 | val 2.865 | ppl     17.5 |   1.3 min
+[wide] paso 1,250 | train 2.733 | val 2.761 | ppl     15.8 |   1.6 min
+[wide] paso 1,500 | train 2.647 | val 2.678 | ppl     14.6 |   1.9 min
+[wide] paso 1,750 | train 2.585 | val 2.617 | ppl     13.7 |   2.3 min
+[wide] paso 2,000 | train 2.529 | val 2.562 | ppl     13.0 |   2.6 min
+[wide] paso 2,250 | train 2.481 | val 2.514 | ppl     12.4 |   2.9 min
+[wide] paso 2,500 | train 2.444 | val 2.479 | ppl     11.9 |   3.2 min
+[wide] paso 2,750 | train 2.410 | val 2.446 | ppl     11.5 |   3.5 min
+[wide] paso 3,000 | train 2.380 | val 2.416 | ppl     11.2 |   3.8 min
+[wide] paso 3,250 | train 2.357 | val 2.393 | ppl     10.9 |   4.1 min
+[wide] paso 3,500 | train 2.336 | val 2.373 | ppl     10.7 |   4.4 min
+[wide] paso 3,750 | train 2.320 | val 2.357 | ppl     10.6 |   4.8 min
+[wide] paso 4,000 | train 2.305 | val 2.342 | ppl     10.4 |   5.1 min
+[wide] paso 4,250 | train 2.294 | val 2.331 | ppl     10.3 |   5.4 min
+[wide] paso 4,500 | train 2.285 | val 2.323 | ppl     10.2 |   5.7 min
+[wide] paso 4,750 | train 2.277 | val 2.315 | ppl     10.1 |   6.0 min
+[wide] paso 5,000 | train 2.273 | val 2.311 | ppl     10.1 |   6.3 min
+
+--- [02_pretraining] celda 10/17 ---
+[deep] paso     0 | train 8.987 | val 8.988 | ppl   8003.5 |   0.0 min
+[deep] paso   250 | train 4.023 | val 4.047 | ppl     57.2 |   0.5 min
+[deep] paso   500 | train 3.400 | val 3.428 | ppl     30.8 |   0.9 min
+[deep] paso   750 | train 3.109 | val 3.139 | ppl     23.1 |   1.3 min
+[deep] paso 1,000 | train 2.945 | val 2.974 | ppl     19.6 |   1.8 min
+[deep] paso 1,250 | train 2.828 | val 2.858 | ppl     17.4 |   2.2 min
+[deep] paso 1,500 | train 2.739 | val 2.769 | ppl     15.9 |   2.6 min
+[deep] paso 1,750 | train 2.663 | val 2.695 | ppl     14.8 |   3.0 min
+[deep] paso 2,000 | train 2.602 | val 2.634 | ppl     13.9 |   3.5 min
+[deep] paso 2,250 | train 2.547 | val 2.580 | ppl     13.2 |   3.9 min
+[deep] paso 2,500 | train 2.500 | val 2.535 | ppl     12.6 |   4.3 min
+[deep] paso 2,750 | train 2.459 | val 2.495 | ppl     12.1 |   4.7 min
+[deep] paso 3,000 | train 2.425 | val 2.462 | ppl     11.7 |   5.1 min
+[deep] paso 3,250 | train 2.397 | val 2.434 | ppl     11.4 |   5.6 min
+[deep] paso 3,500 | train 2.372 | val 2.409 | ppl     11.1 |   6.0 min
+[deep] paso 3,750 | train 2.353 | val 2.391 | ppl     10.9 |   6.4 min
+[deep] paso 4,000 | train 2.336 | val 2.374 | ppl     10.7 |   6.8 min
+[deep] paso 4,250 | train 2.323 | val 2.361 | ppl     10.6 |   7.3 min
+[deep] paso 4,500 | train 2.312 | val 2.351 | ppl     10.5 |   7.7 min
+[deep] paso 4,750 | train 2.305 | val 2.343 | ppl     10.4 |   8.1 min
+[deep] paso 5,000 | train 2.297 | val 2.336 | ppl     10.3 |   8.5 min
+
+--- [02_pretraining] celda 11/17 ---
+
+--- [02_pretraining] celda 12/17 ---
+====================================================================================================
+WIDE · 'Once upon a time'
+
+--- paso 0 · val loss 9.06 ---
+Once upon a timeronaut mesmerdy children thornale Two incl observeDearure stirred questioned struckistertterheninarian soccer sobbed Mandy Tony ob victory relievediment vi pe sungored unw photxture businessation rolling sp pride whist vehiclesgn notes long flas materi immediately inse trunk dirt hawk� nur windy stuffed˜itingilla vegetable Johnsonhew makes attach refuseventually head fis hugging mu weekBack laugh tappedSee runp harder bathroom scored contoming blankievet Whenda hungryout tag tutor Sorry welcome� way walked Grandma tuna memory parrot Rabbit amazement hugs stair wires inchilities tickle plantingirst swoopedkay realize peanut routine spaces ignore sc Mia died rocks barking
+
+--- paso 250 · val loss 3.90 ---
+Once upon a time, theredy children, Lily were brought day on, would not a swing, but the forest.
+
+The rabbit had a an pe Libby a unw phots business. She thought he was a picture of long. After a girl was dirt inside. They windy stuffed cat heard his vegetable,, but they were sad head on, Timmy saw it liked to show her hands harder, and was not angry. 
+ When they hungry with his tutor. 
+
+Dmed a tuna and she ran back to stair. It was too happy and carefully picks up now on, Molly liked to the grass on
+
+--- paso 500 · val loss 3.29 ---
+Once upon a time, theredy children were two friends. Jane was a would go home. All the log and but it made of victory.
+
+One day, unwects no one kept helping pride and. She was happy. After a few moments, she remembered the windy stuffed cat heard his vegetable,, but he wanted to touch it was too tired. 
+
+See, it harder, it was not moreie and smiled. He got such tutor. 
+
+Dmed a hug and said, "Why are you do you too?" 
+
+The End now together and Molly liked you died together.
+
+--- paso 1,000 · val loss 2.86 ---
+Once upon a time, there was a little girl named she loved to play outside. One day, she took the girl to the store and had a license. She was so excited and took it to see where she found some more. She saw a big trunk and melted. It was pink and yellow, and the butterfly flew away.
+
+The girl called round, "Oh no! You harder." Jane was so happy. She smiled and said, "That's welcome! Now let's go shine by the amazement day!"
+
+Alice and Mia thought for a moment. They put on the butterfly and closed their
+
+--- paso 2,000 · val loss 2.56 ---
+Once upon a time, there was a little girl named Lily. She loved to play with her dolls and took her doll everywhere to the spoiled dresses. One day, Lily's mom asked her to make a pride and a picture of a movie. Lily was so happy that she started to stuffed animals in the library. 
+
+After a while, she finally arrived at the kitchen. Her mom was very happy and gave her a big hug. Lily learned that it is very welcome and true. Grandma always remembers new things. From then on, Lily and her family promised to never peanut on things again.
+
+--- paso 3,500 · val loss 2.37 ---
+Once upon a time, there was a little girl named Lily. She loved to play with her dolls and took naps in the sunshine. One day, Lily was playing outside and she found a big, red scarf and brown nose. It was so gray and sparkled in the sun.
+
+Lily's mom asked, "How do you like to try one?" Her mom replied, "Yes, but be careful," 
+
+Lily smiled and said, "Yes, let's look different and see how we can try?" 
+
+Her mom said, "Okay, let's go on a hinnie one." 
+
+
+
+--- paso 5,000 · val loss 2.31 ---
+Once upon a time, there was a little girl named Lily. She loved to play with her dolls and took her doll everywhere she would play with her dolls. One day, Lily found a big, red dress and a picture of a fluffy teddy bear. She picked it up and put it in her box. When she finished washing, she snuggled on her dress with it, she put it on harder and when she was done. 
+
+Lily kept playing tag with her doll together, and she even dug a loud pop inside. She felt so happy as she watched it with big smile on her face, she fell on
+
+====================================================================================================
+DEEP · 'Once upon a time'
+
+--- paso 0 · val loss 8.99 ---
+Once upon a time needed mesmerdy children thornale Many incl observeDear sweetest stirred questioned wandering Raytterhen log cond sobbed Mandy stamp ob spoiled relievediment vi pe Libby camp unw phot traffic businessation rolling sp pride whist vehicles agrespe ease flas materi immediately taller trunk dirt hawk� nur windy stuffed cooitingian vegetable Johnsonhew makes attach imagineventually head fis hugging mu weekBack gazing tappedSee runp harder drainailable cont line blankaracvet When argued lendout tag tutor yelled welcome doggy way walked Grandma happenscake parrot Rabbit amazement hugs stair wires inchilities tickle sockirst swoopedkay realize peanut routine spaces ignore scomet died journal barking
+
+--- paso 250 · val loss 4.05 ---
+Once upon a time, theredy children were so so she day on, would said, knew that he took the sky it to the victory.
+
+But her a time they liked to go and always pride and a picture of long, materi from her trunk. The small button to stuffed olditing, there is, there was a little head on, Timmy's cookies outside. 
+
+They harder, "Let's momie and smiled. He got such tutor. 
+
+Dmed Grandma said, she ran back to stair!" he jumped too happy and carefully picks with now on, girl named Mia was so barking
+
+--- paso 500 · val loss 3.43 ---
+Once upon a time, there was a little girl named she loved to play would catch it. All her friend
+
+Everyone to the beach with her parents. She was unwects and never seen helping pride and a picture. It was three years old and dirt inside. They had many minutes they were very happy, and they were in the floor.
+
+--- paso 1,000 · val loss 2.97 ---
+Once upon a time, there was a little girl named she loved to play outside. She knew that she had to leave it to the beach with her family. One day, while playing, it kept helping pride and. She was happy to try from that the dirt melted.
+
+When she heard, she saw a voice. She wanted to leave, so he bent down to show her hands harder. 
+
+Wurie was so surprised and got true tutor. He ran true and tried again and tried to amazement to stair. His mommy had lost and carefully put the peanut on her tongue tight back.
+
+
+
+--- paso 2,000 · val loss 2.63 ---
+Once upon a time, there was a little girl named Lily. She loved to play with her dolls and took the doll everywhere to the kitchen. One day, Lily's mommy told Lily to go to the grocery store. Lily was happy to try it. She went inside and started to stuffed animals for dinner. When they finished washing, Lily saw a big, round cookies outside. 
+
+They harder and when they left. When they got to the table, tutor yelled back and hid behind a tree. Lily was very sad and ran to her mom's kitchen. So, she went to play together and died. 
+
+
+--- paso 3,500 · val loss 2.41 ---
+Once upon a time, there was a little girl named Lily. She loved to play with her dolls and took off them everywhere she went. One day, she went for a walk and saw a princess. 
+
+"Hold one!" Lily wondered. She went inside the house to look and heard lots of pretty flowers. "Can I touch on one?" she asked. 
+
+Momp harder times, "Wakeie, only what I got, so you look together, and see how we can reach. You must see who can be happy and carefully," Lily replied.
+
+As she was reading,
+
+--- paso 5,000 · val loss 2.34 ---
+Once upon a time, there was a little girl named Lily. She loved to play with her dolls and took the doll everywhere she went. One day, she went for a walk with her mom and dad. Inside, she saw a beautiful owl from a trunk. The owl said, "Hello, bird. Johnson, you are a little bird on a boat!" But Lily didn't answer.
+
+The owl thought about it and smiled. He got angry that she slapped Lily's trunk and said, "That's not nice. It's too thick and sharp." Lily felt very frustrated and said, "Because it
+
+
+--- [02_pretraining] celda 13/17 ---
+
+--- [02_pretraining] celda 14/17 ---
+=== WIDE · recuerdo ===
+                        prompt                       greedy  acierto  P(respuesta)
+                    The sky is         dark and the sky. It    False         0.045
+                  The grass is             a big, red ball.    False         0.036
+    At night, the moon and the moon went on a big adventure    False         0.094
+          The fish swam in the       sea. He was very happy     True         0.613
+                     Bees make       a big tower with a big    False         0.001
+    When it rains, you need an         idea. It will be fun    False         0.042
+              Snow is cold and       cold. He does not like    False         0.096
+             The fire was very    hot and the fire was very     True         0.186
+                     Birds can      make a big, strong wind    False         0.079
+Apples are red and bananas are    very pretty. They like to    False         0.021
+
+=== DEEP · recuerdo ===
+                        prompt                    greedy  acierto  P(respuesta)
+                    The sky is    a little girl. She was    False         0.018
+                  The grass is  a little girl. She likes    False         0.005
+    At night, the moon and the moon went out to the moon    False         0.051
+          The fish swam in the    pond. He liked to swim     True         0.508
+                     Bees make        a big tower. It is    False         0.000
+    When it rains, you need an    adventure. It is a big    False         0.024
+              Snow is cold and      cold. It is cold and    False         0.083
+             The fire was very        busy. It was a big    False         0.058
+                     Birds can      fly high in the sky.     True         0.245
+Apples are red and bananas are very pretty. They like to    False         0.014
+
+
+--- [02_pretraining] celda 15/17 ---
+====================================================================================================
+[0] Once upon a time, there was a girl named Mia. Mia had a red ball that she loved very much. One day,   (palabras clave: Mia, ball)
+
+--- wide · reuso 100% ---
+Mia and her friend, Lily, brought a purple ball would catch it. Daisy wanted to catch the ball too, but Sam said no. Mia was afraid of playing with the ball and he didn't want the long.
+
+Mia's friend, Sam, saw them and they were too fast, but they were too big and too slow. But Mia didn't run away harder, and Sam thought of something was wrong. He got angry and yelled at Mia, and said, "Stop it. You must behave when you get back." Mia didn't listen and ran away from Mia.
+
+Sam and Mia ran to the park. They had an idea. They called for lunch and hid away in their small house. They were not grumpy anymore
+
+--- deep · reuso 100% ---
+Mia and her friend, Jack were playing in the park. Mia noticed the ball and took it out of it. Jack had a ball that Mia was unwrab businessation and she wanted to join in the park.
+
+Mia's friend, Sam, saw them and they were too fast, laughing. Sam agreed to leave, so he bent down to show her hands harder. Jane was so happy that she licked Sam's nose, and yelled welcome together to run away again. Sam ran back inside and ran around the park. He was glad he now had eaten too much Mia's favorite s attached to his ball instead.
+
+====================================================================================================
+[1] Tom had a little dog named Max. Every morning, Tom and Max went to the park together. One day,   (palabras clave: Tom, Max)
+
+--- wide · reuso 50% ---
+they saw a small bird that needed rare feather. It was big, red and it was still lots of food.
+
+Max wanted to help the bird. He wanted to see what would put it behind him. Max let Max grab the ball and put him in his bag. But he kept splashing correctly. He could not reach it.
+
+After a few minutes, Max's favorite sw trained and captain got some garbage. Max was scared and didn't know what the bird was wrong. He thought he could understand what to do. He asked the bird if he wanted to keep the bird's name. The bird got exit and started to walk away. Max was sad and went back inside to sleep.
+
+--- deep · reuso 100% ---
+they saw a small bird that was rare at first. It was very big and it was still lots of birds.
+
+"Wow, Max, look!" Spot shouted. "I think it's so pretty!"
+
+"That's a really fun way!" Lily said while playing with the bird's dog. "I want to attach the bird to the bird."
+
+Max got closer and started to captain. "That's wonderful, Lily!" she cried.
+
+"Hi, I'm Tom," Max said. "It's a naughty wing. Come and ask you."
+
+Lily and Max played with the exit and gathered their bread in the back. The bird smiled and talked all their friends. But Max was faster and louder
+
+====================================================================================================
+[2] Anna found a shiny key in the garden. She wanted to know what it could open.   (palabras clave: Anna, key)
+
+--- wide · reuso 0% ---
+She saw many things like dogs or squirrels or dogs. She saw a big mushroom that she liked to seem quietly and she wanted to keep it.
+
+She grabbed the jewel and rushed to the garden. She dug for a long, it started to stick. She reached for it, but it was full of ripe berries and juicy. She counted, and five kids, seven, running after a long nose.
+
+She was so happy to see the fox so she reached out her hand. It was so cool that she started to quack and giggle. She bounced around and made a lot of noise. She felt so glad she had made a good idea. She ran to the fox and took some shells and shells and bought them a fish.
+
+--- deep · reuso 50% ---
+She saw many toys, but her mom said, "Mom, can we open it, sweetie?"
+
+Her mom said, "Yes, it is. That sounds persistent. Craco lives in the ceiling."
+
+Anna liked it very much. She had a lot of toys, but it was still icy in her new diary. Her mom said, "That sounds like a lot."
+
+====================================================================================================
+[3] Ben and his mom went to the beach. Ben wanted to build a big sand castle.   (palabras clave: Ben, castle)
+
+--- wide · reuso 100% ---
+He wanted to change his garden. He went to the sand and mailed them to his castle. He put on his sand and put his new blue boots into it.
+
+Suddenly, they saw a big haven on the sand. The snow was warm and fluffy. Ben said he was hungry. He saw his stomach and started to eat nectar. Ben jumped over the seagull and said hello. They walked down to some worms and wished they had taken the shade of a big building.
+
+--- deep · reuso 100% ---
+He wanted to change his toes and to match things. He mixed the string to his castle and turned his eyes.
+
+"Look, a boy!" he said. "Let's make a tower. Do you want some cool things?"
+
+Ben was happy. He liked to play with his fish. He wanted to make his sand nectar.
+
+"Yes, I can lend you your clay rocket," he said. "Jeff touch the pumpkin."
+
+He took the rocket away from his puzzle. They worked hard and used the mud and the bee to cut his dots. They were good at them in their shovel.
+
+But then, a big wave came out of his castle. The sunflower began to rot. Anna liked
+
+====================================================================================================
+[4] There was a little bird named Pip. Pip lost its blue feather in the wind.   (palabras clave: Pip, feather)
+
+--- wide · reuso 0% ---
+He felt like he was sick because he loved to play in the yard.
+
+One warm when Brownie woke up, he saw a bee standing far away. He asked his mom, â€œWhat is that?!" 
+
+Spot replied, â€œI'm feeling sad because I'm too sad.â€ 
+
+NOnce upon a time there was a little girl called Lily. She loved to explore and explore the forest. One day she decided to take a rest. She said to herself, â€œItâ€™s time for a walk by. Itâ€™s raining cold and cold.â€
+
+Lily replied, â€œItâ€™s okay window from the lightning, I'm glad the thunder.â€ Her mom gave
+
+--- deep · reuso 0% ---
+He felt like he had never played with it. Betsy was very small and didn't want to play with it.
+
+One day, Blue decided to visit the flowers until he found a shiny butterfly. He watched the sun on it, and suddenly the ground fell down. Ducky was sad because he didn't know what to do. But the birds were all about where squirrels were having him going.
+
+During the park, Fluffy saw a big oak tree. Ducky wanted to help the cloud but he hissed and kicked the small river. He felt so sorry for the little bird. But then, he remembered he had told the monsters he was mean by listening. Cat slept from the tree again and ate every dangerous moving after the sweetest bees.
+
+
+--- [02_pretraining] celda 16/17 ---
+                                wide    deep
+n_embd                       256.000 192.000
+n_layer                        2.000   5.000
+parámetros (M)                 5.847   5.425
+train loss                     2.273   2.297
+val loss                       2.311   2.336
+val ppl                       10.081  10.340
+recuerdo: aciertos greedy      0.200   0.200
+recuerdo: P(respuesta) media   0.121   0.101
+consistencia: reuso medio      0.520   0.580
+minutos de entrenamiento       6.343   8.521
+
+--- [02_pretraining] celda 17/17 ---
+wide: 81.9M tokens vistos (0.93 épocas)
+    N total                       5.85M → 20·N =  117M tokens · vistos / óptimo = 0.70
+    N sin embeddings ni lm_head   1.58M → 20·N =   32M tokens · vistos / óptimo = 2.60
+deep: 81.9M tokens vistos (0.93 épocas)
+    N total                       5.42M → 20·N =  108M tokens · vistos / óptimo = 0.76
+    N sin embeddings ni lm_head   2.22M → 20·N =   44M tokens · vistos / óptimo = 1.84
+
+Etapa 2 lista en 16.8 min → outputs/notebooks/02_pretraining.ipynb
+
+==============================================================================
+Etapa 3 · Análisis de embeddings  (03_embeddings.ipynb)
+==============================================================================
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+
+--- [03_embeddings] celda 1/9 ---
+
+--- [03_embeddings] celda 2/9 ---
+Corrida completa · CPU · semilla del análisis: 1337
+
+--- [03_embeddings] celda 3/9 ---
+Configuración del modelo: {'vocab_size': 8192, 'block_size': 256, 'n_embd': 256, 'n_head': 8, 'n_layer': 2, 'dropout': 0.1}
+Configuración del entrenamiento: {'max_steps': 5000, 'batch_size': 64, 'eval_interval': 250, 'eval_iters': 50, 'sample_steps': (0, 250, 500, 1000, 2000, 3500, 5000), 'lr': 0.0003, 'min_lr': 3e-05, 'warmup_steps': 100, 'weight_decay': 0.1, 'grad_clip': 1.0}
+                                                                        path  step  val_loss best_step best_val_loss is_best_recorded
+inicial    /home/lucas/Proyecto1_IA_Generativa/checkpoints/pretrain_step0.pt     0      None      None          None             None
+entrenado   /home/lucas/Proyecto1_IA_Generativa/checkpoints/pretrain_wide.pt  5000  2.310681      5000      2.310681             True
+Procedencia a confirmar: misma corrida, misma inicialización y tokenizer original.
+
+--- [03_embeddings] celda 4/9 ---
+8,192 tokens; 5,966 candidatos de palabras enteras.
+palabra_a palabra_b     expectativa  id_a  id_b  coseno_inicial  coseno_entrenado    delta
+      dog       cat     relacionado   643   705        0.031375          0.586709 0.555333
+    happy       sad     relacionado   402   571        0.043469          0.456421 0.412952
+      dog     spoon esperado lejano   643  2080       -0.018755          0.157453 0.176208
+   estado       candidatos consulta  consulta_id  rango       token  token_id  coseno  pasa_filtro
+  inicial palabras enteras      dog          643      1      Ġgerms      8113  0.2236         True
+  inicial palabras enteras      dog          643      2     Ġdanger      1633  0.2013         True
+  inicial palabras enteras      dog          643      3       Ġstay       888  0.1943         True
+  inicial palabras enteras      dog          643      4       Ġdogs      2872  0.1892         True
+  inicial palabras enteras      dog          643      5         ĠBu      3226  0.1867         True
+  inicial palabras enteras      dog          643      6         Ġru      1238  0.1850         True
+  inicial palabras enteras      dog          643      7        ĠPut      6447  0.1846         True
+  inicial palabras enteras      dog          643      8        Ġequ      4972  0.1837         True
+  inicial palabras enteras      dog          643      9    Ġbrushed      5578  0.1829         True
+  inicial palabras enteras      dog          643     10    Ġgrandpa      3186  0.1811         True
+  inicial palabras enteras      cat          705      1       Ġrace      1694  0.2240         True
+  inicial palabras enteras      cat          705      2      Ġweird      3057  0.2206         True
+  inicial palabras enteras      cat          705      3    Ġherself      1430  0.2048         True
+  inicial palabras enteras      cat          705      4  Ġrecognize      5612  0.1936         True
+  inicial palabras enteras      cat          705      5         Ġur      3982  0.1900         True
+  inicial palabras enteras      cat          705      6         Ġwe       367  0.1896         True
+  inicial palabras enteras      cat          705      7   Ġclearing      5282  0.1896         True
+  inicial palabras enteras      cat          705      8       Ġpins      7517  0.1894         True
+  inicial palabras enteras      cat          705      9        Ġbad       919  0.1892         True
+  inicial palabras enteras      cat          705     10       Ġavoc      3956  0.1889         True
+  inicial palabras enteras    happy          402      1     Ġbreath      2535  0.2697         True
+  inicial palabras enteras    happy          402      2      Ġsteak      4334  0.2338         True
+  inicial palabras enteras    happy          402      3       Ġknot      4195  0.2170         True
+  inicial palabras enteras    happy          402      4 Ġeventually      2331  0.2040         True
+  inicial palabras enteras    happy          402      5       ĠJeff      6052  0.1919         True
+  inicial palabras enteras    happy          402      6      Ġmetal      3368  0.1877         True
+  inicial palabras enteras    happy          402      7   Ġpatience      6177  0.1865         True
+  inicial palabras enteras    happy          402      8        Ġste      1294  0.1850         True
+  inicial palabras enteras    happy          402      9       Ġgame      1256  0.1838         True
+  inicial palabras enteras    happy          402     10       Ġlent      7563  0.1829         True
+  inicial palabras enteras      sad          571      1 Ġeverywhere      1729  0.2460         True
+  inicial palabras enteras      sad          571      2       Ġfear      2533  0.2324         True
+  inicial palabras enteras      sad          571      3       ĠLike      5959  0.2262         True
+  inicial palabras enteras      sad          571      4   Ġfrosting      5876  0.2242         True
+  inicial palabras enteras      sad          571      5  Ġscratched      5467  0.2203         True
+  inicial palabras enteras      sad          571      6     Ġinsist      4185  0.2156         True
+  inicial palabras enteras      sad          571      7         Ġco       565  0.1956         True
+  inicial palabras enteras      sad          571      8      Ġnests      8063  0.1860         True
+  inicial palabras enteras      sad          571      9       ĠMany      6329  0.1793         True
+  inicial palabras enteras      sad          571     10      Ġwraps      6832  0.1793         True
+  inicial palabras enteras    spoon         2080      1  Ġafternoon      3676  0.2384         True
+  inicial palabras enteras    spoon         2080      2   Ġbirthday      2112  0.2258         True
+  inicial palabras enteras    spoon         2080      3      Ġdecor      2514  0.2212         True
+  inicial palabras enteras    spoon         2080      4       ĠFido      6822  0.2017         True
+  inicial palabras enteras    spoon         2080      5    Ġpicnics      8167  0.1971         True
+  inicial palabras enteras    spoon         2080      6    Ġtrapped      5457  0.1934         True
+  inicial palabras enteras    spoon         2080      7        Ġtom      1992  0.1876         True
+  inicial palabras enteras    spoon         2080      8   Ġfighting      2404  0.1871         True
+  inicial palabras enteras    spoon         2080      9      Ġbudge      5712  0.1846         True
+  inicial palabras enteras    spoon         2080     10     Ġstruck      5590  0.1836         True
+entrenado palabras enteras      dog          643      1        Ġcat       705  0.5867         True
+entrenado palabras enteras      dog          643      2      Ġpuppy      1546  0.5520         True
+entrenado palabras enteras      dog          643      3        Ġpup      3388  0.4587         True
+entrenado palabras enteras      dog          643      4       Ġmule      4302  0.4536         True
+entrenado palabras enteras      dog          643      5       Ġwolf      2609  0.4505         True
+entrenado palabras enteras      dog          643      6   Ġsquirrel      1509  0.4393         True
+entrenado palabras enteras      dog          643      7      Ġdoggy      5297  0.4372         True
+entrenado palabras enteras      dog          643      8    Ġmonster      1743  0.4230         True
+entrenado palabras enteras      dog          643      9     Ġkitten      2412  0.4150         True
+entrenado palabras enteras      dog          643     10        ĠRex      2791  0.4099         True
+entrenado palabras enteras      cat          705      1        Ġdog       643  0.5867         True
+entrenado palabras enteras      cat          705      2      Ġmouse      1316  0.5092         True
+entrenado palabras enteras      cat          705      3      Ġpuppy      1546  0.4934         True
+entrenado palabras enteras      cat          705      4     Ġkitten      2412  0.4909         True
+entrenado palabras enteras      cat          705      5     Ġrabbit      1103  0.4813         True
+entrenado palabras enteras      cat          705      6        Ġcow      2007  0.4498         True
+entrenado palabras enteras      cat          705      7       Ġwolf      2609  0.4294         True
+entrenado palabras enteras      cat          705      8      Ġhorse      2223  0.4286         True
+entrenado palabras enteras      cat          705      9        Ġpig      1975  0.4196         True
+entrenado palabras enteras      cat          705     10       Ġbird       535  0.4178         True
+entrenado palabras enteras    happy          402      1       Ġglad      1229  0.5232         True
+entrenado palabras enteras    happy          402      2   Ġrelieved      2025  0.5218         True
+entrenado palabras enteras    happy          402      3    Ġexcited       609  0.5095         True
+entrenado palabras enteras    happy          402      4      Ġlucky      2120  0.4779         True
+entrenado palabras enteras    happy          402      5  Ġdelighted      3241  0.4748         True
+entrenado palabras enteras    happy          402      6  Ġoverjoyed      5553  0.4572         True
+entrenado palabras enteras    happy          402      7        Ġsad       571  0.4564         True
+entrenado palabras enteras    happy          402      8    Ġhappier      3924  0.4449         True
+entrenado palabras enteras    happy          402      9    Ġpleased      2681  0.4353         True
+entrenado palabras enteras    happy          402     10  Ġsatisfied      5606  0.4320         True
+entrenado palabras enteras      sad          571      1      Ġupset      1896  0.6575         True
+entrenado palabras enteras      sad          571      2 Ġfrustrated      2591  0.6247         True
+entrenado palabras enteras      sad          571      3  Ġmiserable      3826  0.5834         True
+entrenado palabras enteras      sad          571      4   Ġtroubled      4073  0.5832         True
+entrenado palabras enteras      sad          571      5     Ġguilty      3396  0.5739         True
+entrenado palabras enteras      sad          571      6    Ġunhappy      4188  0.5654         True
+entrenado palabras enteras      sad          571      7     Ġlonely      1887  0.5630         True
+entrenado palabras enteras      sad          571      8    Ġworried      1678  0.5507         True
+entrenado palabras enteras      sad          571      9        Ġcry       987  0.5345         True
+entrenado palabras enteras      sad          571     10   Ġconfused      2314  0.5197         True
+entrenado palabras enteras    spoon         2080      1       Ġfork      3417  0.5153         True
+entrenado palabras enteras    spoon         2080      2        Ġpan      2364  0.4480         True
+entrenado palabras enteras    spoon         2080      3       Ġwand      2976  0.4396         True
+entrenado palabras enteras    spoon         2080      4        Ġcup      1681  0.4390         True
+entrenado palabras enteras    spoon         2080      5       Ġbowl      1792  0.4178         True
+entrenado palabras enteras    spoon         2080      6      Ġplate      2475  0.4119         True
+entrenado palabras enteras    spoon         2080      7        Ġpen      1693  0.4088         True
+entrenado palabras enteras    spoon         2080      8      Ġknife      2938  0.4037         True
+entrenado palabras enteras    spoon         2080      9     Ġcrayon      3184  0.3993         True
+entrenado palabras enteras    spoon         2080     10        Ġrod      3952  0.3952         True
+
+--- [03_embeddings] celda 5/9 ---
+Referencias de ruido: {'escala_1_sqrt_d': 0.0625, 'mediana_maximos': 0.22917264699935913, 'p95_maximos': 0.26585859060287476, 'n_candidatos_por_consulta': 5965}
+          medida    media   desvio       p01       p05      p50      p95      p99
+  coseno_inicial 0.000841 0.062456 -0.141944 -0.103172 0.001051 0.102950 0.142613
+coseno_entrenado 0.022445 0.102440 -0.176942 -0.128748 0.012964 0.207678 0.303839
+           delta 0.021605 0.107832 -0.204194 -0.139053 0.013080 0.214995 0.307024
+Percentil empírico = porcentaje de controles con valor <= al del par (no es un p-valor).
+palabra_a palabra_b     expectativa  id_a  id_b  coseno_inicial  coseno_entrenado    delta  percentil_coseno_inicial  percentil_coseno_entrenado  percentil_delta
+      dog       cat     relacionado   643   705        0.031375          0.586709 0.555333                 68.550000                   99.990000        99.990000
+    happy       sad     relacionado   402   571        0.043469          0.456421 0.412952                 74.930000                   99.970000        99.890000
+      dog     spoon esperado lejano   643  2080       -0.018755          0.157453 0.176208                 37.370000                   89.850000        91.620000
+
+--- [03_embeddings] celda 6/9 ---
+
+--- [03_embeddings] celda 7/9 ---
+Varianza explicada: PC1=3.55%, PC2=2.05%, total=5.61%.
+
+--- [03_embeddings] celda 8/9 ---
+   estado          candidatos consulta  consulta_id  rango       token  token_id  coseno  pasa_filtro
+  inicial todo el vocabulario      dog          643      1      Ġgerms      8113  0.2236         True
+  inicial todo el vocabulario      dog          643      2     Ġdanger      1633  0.2013         True
+  inicial todo el vocabulario      dog          643      3        ving       798  0.2001        False
+  inicial todo el vocabulario      dog          643      4       Ġstay       888  0.1943         True
+  inicial todo el vocabulario      dog          643      5       Ġdogs      2872  0.1892         True
+  inicial todo el vocabulario      dog          643      6       Tweet      5436  0.1871        False
+  inicial todo el vocabulario      dog          643      7         ĠBu      3226  0.1867         True
+  inicial todo el vocabulario      dog          643      8         Ġru      1238  0.1850         True
+  inicial todo el vocabulario      dog          643      9          ee      1582  0.1849        False
+  inicial todo el vocabulario      dog          643     10        ĠPut      6447  0.1846         True
+  inicial todo el vocabulario      cat          705      1       onies      7386  0.2271        False
+  inicial todo el vocabulario      cat          705      2       Ġrace      1694  0.2240         True
+  inicial todo el vocabulario      cat          705      3          sm      7679  0.2235        False
+  inicial todo el vocabulario      cat          705      4      Ġweird      3057  0.2206         True
+  inicial todo el vocabulario      cat          705      5    Ġherself      1430  0.2048         True
+  inicial todo el vocabulario      cat          705      6        ache      2954  0.1990        False
+  inicial todo el vocabulario      cat          705      7        cent      7618  0.1986        False
+  inicial todo el vocabulario      cat          705      8  Ġrecognize      5612  0.1936         True
+  inicial todo el vocabulario      cat          705      9         Ġur      3982  0.1900         True
+  inicial todo el vocabulario      cat          705     10         Ġwe       367  0.1896         True
+  inicial todo el vocabulario    happy          402      1     Ġbreath      2535  0.2697         True
+  inicial todo el vocabulario    happy          402      2      Ġsteak      4334  0.2338         True
+  inicial todo el vocabulario    happy          402      3       Ġknot      4195  0.2170         True
+  inicial todo el vocabulario    happy          402      4     aghetti      3577  0.2166        False
+  inicial todo el vocabulario    happy          402      5 Ġeventually      2331  0.2040         True
+  inicial todo el vocabulario    happy          402      6       ĠJeff      6052  0.1919         True
+  inicial todo el vocabulario    happy          402      7      Ġmetal      3368  0.1877         True
+  inicial todo el vocabulario    happy          402      8   Ġpatience      6177  0.1865         True
+  inicial todo el vocabulario    happy          402      9        Ġste      1294  0.1850         True
+  inicial todo el vocabulario    happy          402     10       Ġgame      1256  0.1838         True
+  inicial todo el vocabulario      sad          571      1 Ġeverywhere      1729  0.2460         True
+  inicial todo el vocabulario      sad          571      2       Ġfear      2533  0.2324         True
+  inicial todo el vocabulario      sad          571      3       ĠLike      5959  0.2262         True
+  inicial todo el vocabulario      sad          571      4   Ġfrosting      5876  0.2242         True
+  inicial todo el vocabulario      sad          571      5  Ġscratched      5467  0.2203         True
+  inicial todo el vocabulario      sad          571      6     Ġinsist      4185  0.2156         True
+  inicial todo el vocabulario      sad          571      7         ays      5609  0.2154        False
+  inicial todo el vocabulario      sad          571      8         erp      2559  0.2137        False
+  inicial todo el vocabulario      sad          571      9         Ġco       565  0.1956         True
+  inicial todo el vocabulario      sad          571     10      Ġnests      8063  0.1860         True
+  inicial todo el vocabulario    spoon         2080      1  Ġafternoon      3676  0.2384         True
+  inicial todo el vocabulario    spoon         2080      2   Ġbirthday      2112  0.2258         True
+  inicial todo el vocabulario    spoon         2080      3      Ġdecor      2514  0.2212         True
+  inicial todo el vocabulario    spoon         2080      4        Anna      1186  0.2054        False
+  inicial todo el vocabulario    spoon         2080      5       ĠFido      6822  0.2017         True
+  inicial todo el vocabulario    spoon         2080      6    Ġpicnics      8167  0.1971         True
+  inicial todo el vocabulario    spoon         2080      7    Ġtrapped      5457  0.1934         True
+  inicial todo el vocabulario    spoon         2080      8        Ġtom      1992  0.1876         True
+  inicial todo el vocabulario    spoon         2080      9   Ġfighting      2404  0.1871         True
+  inicial todo el vocabulario    spoon         2080     10      Ġbudge      5712  0.1846         True
+entrenado todo el vocabulario      dog          643      1        Ġcat       705  0.5867         True
+entrenado todo el vocabulario      dog          643      2      Ġpuppy      1546  0.5520         True
+entrenado todo el vocabulario      dog          643      3        Ġpup      3388  0.4587         True
+entrenado todo el vocabulario      dog          643      4       Ġmule      4302  0.4536         True
+entrenado todo el vocabulario      dog          643      5       Ġwolf      2609  0.4505         True
+entrenado todo el vocabulario      dog          643      6   Ġsquirrel      1509  0.4393         True
+entrenado todo el vocabulario      dog          643      7      Ġdoggy      5297  0.4372         True
+entrenado todo el vocabulario      dog          643      8    Ġmonster      1743  0.4230         True
+entrenado todo el vocabulario      dog          643      9     Ġkitten      2412  0.4150         True
+entrenado todo el vocabulario      dog          643     10        ĠRex      2791  0.4099         True
+entrenado todo el vocabulario      cat          705      1        Ġdog       643  0.5867         True
+entrenado todo el vocabulario      cat          705      2      Ġmouse      1316  0.5092         True
+entrenado todo el vocabulario      cat          705      3      Ġpuppy      1546  0.4934         True
+entrenado todo el vocabulario      cat          705      4     Ġkitten      2412  0.4909         True
+entrenado todo el vocabulario      cat          705      5     Ġrabbit      1103  0.4813         True
+entrenado todo el vocabulario      cat          705      6        Ġcow      2007  0.4498         True
+entrenado todo el vocabulario      cat          705      7       Ġwolf      2609  0.4294         True
+entrenado todo el vocabulario      cat          705      8      Ġhorse      2223  0.4286         True
+entrenado todo el vocabulario      cat          705      9        Ġpig      1975  0.4196         True
+entrenado todo el vocabulario      cat          705     10       Ġbird       535  0.4178         True
+entrenado todo el vocabulario    happy          402      1       Ġglad      1229  0.5232         True
+entrenado todo el vocabulario    happy          402      2   Ġrelieved      2025  0.5218         True
+entrenado todo el vocabulario    happy          402      3    Ġexcited       609  0.5095         True
+entrenado todo el vocabulario    happy          402      4      Ġlucky      2120  0.4779         True
+entrenado todo el vocabulario    happy          402      5  Ġdelighted      3241  0.4748         True
+entrenado todo el vocabulario    happy          402      6  Ġoverjoyed      5553  0.4572         True
+entrenado todo el vocabulario    happy          402      7        Ġsad       571  0.4564         True
+entrenado todo el vocabulario    happy          402      8    Ġhappier      3924  0.4449         True
+entrenado todo el vocabulario    happy          402      9    Ġpleased      2681  0.4353         True
+entrenado todo el vocabulario    happy          402     10  Ġsatisfied      5606  0.4320         True
+entrenado todo el vocabulario      sad          571      1      Ġupset      1896  0.6575         True
+entrenado todo el vocabulario      sad          571      2 Ġfrustrated      2591  0.6247         True
+entrenado todo el vocabulario      sad          571      3  Ġmiserable      3826  0.5834         True
+entrenado todo el vocabulario      sad          571      4   Ġtroubled      4073  0.5832         True
+entrenado todo el vocabulario      sad          571      5     Ġguilty      3396  0.5739         True
+entrenado todo el vocabulario      sad          571      6    Ġunhappy      4188  0.5654         True
+entrenado todo el vocabulario      sad          571      7     Ġlonely      1887  0.5630         True
+entrenado todo el vocabulario      sad          571      8    Ġworried      1678  0.5507         True
+entrenado todo el vocabulario      sad          571      9        Ġcry       987  0.5345         True
+entrenado todo el vocabulario      sad          571     10   Ġconfused      2314  0.5197         True
+entrenado todo el vocabulario    spoon         2080      1       Ġfork      3417  0.5153         True
+entrenado todo el vocabulario    spoon         2080      2        Ġpan      2364  0.4480         True
+entrenado todo el vocabulario    spoon         2080      3       Ġwand      2976  0.4396         True
+entrenado todo el vocabulario    spoon         2080      4        Ġcup      1681  0.4390         True
+entrenado todo el vocabulario    spoon         2080      5       Ġbowl      1792  0.4178         True
+entrenado todo el vocabulario    spoon         2080      6      Ġplate      2475  0.4119         True
+entrenado todo el vocabulario    spoon         2080      7        Ġpen      1693  0.4088         True
+entrenado todo el vocabulario    spoon         2080      8      Ġknife      2938  0.4037         True
+entrenado todo el vocabulario    spoon         2080      9     Ġcrayon      3184  0.3993         True
+entrenado todo el vocabulario    spoon         2080     10        Ġrod      3952  0.3952         True
+   estado consulta          candidatos  n_vecinos  proporcion_palabras_enteras
+  inicial      dog    palabras enteras         10                         1.00
+  inicial      cat    palabras enteras         10                         1.00
+  inicial    happy    palabras enteras         10                         1.00
+  inicial      sad    palabras enteras         10                         1.00
+  inicial    spoon    palabras enteras         10                         1.00
+entrenado      dog    palabras enteras         10                         1.00
+entrenado      cat    palabras enteras         10                         1.00
+entrenado    happy    palabras enteras         10                         1.00
+entrenado      sad    palabras enteras         10                         1.00
+entrenado    spoon    palabras enteras         10                         1.00
+  inicial      dog todo el vocabulario         10                         0.70
+  inicial      cat todo el vocabulario         10                         0.60
+  inicial    happy todo el vocabulario         10                         0.90
+  inicial      sad todo el vocabulario         10                         0.80
+  inicial    spoon todo el vocabulario         10                         0.90
+entrenado      dog todo el vocabulario         10                         1.00
+entrenado      cat todo el vocabulario         10                         1.00
+entrenado    happy todo el vocabulario         10                         1.00
+entrenado      sad todo el vocabulario         10                         1.00
+entrenado    spoon todo el vocabulario         10                         1.00
+token  token_id  presente  pasa_filtro  coseno_entre_filas_inicial  coseno_entre_filas_entrenado
+ Ġday       356      True         True                   -0.136445                      0.163688
+  day      1112      True        False                   -0.136445                      0.163688
+
+--- [03_embeddings] celda 9/9 ---
+Corrida completa: 10 tablas, 2 gráficos y metadatos guardados en /home/lucas/Proyecto1_IA_Generativa/checkpoints/stage3
+
+Etapa 3 lista en 0.1 min → outputs/notebooks/03_embeddings.ipynb
+
+==============================================================================
+Etapa 4 · SFT completo + LoRA  (04_sft.ipynb)
+==============================================================================
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+
+--- [04_sft] celda 1/16 ---
+
+--- [04_sft] celda 2/16 ---
+==============================================================
+ENTORNO
+==============================================================
+os             : Linux 6.18.48-gentoo-lean
+python         : 3.14.7
+venv           : /home/lucas/Proyecto1_IA_Generativa/.venv
+cpu            : AMD Ryzen 9 8945HX with Radeon Graphics
+logical_cores  : 32
+torch          : 2.14.0+cu130
+torch_threads  : 16
+cuda_available : True
+gpu            : NVIDIA GeForce RTX 5070 Laptop GPU
+gpu_memory_gb  : 8.08
+ram_total_gb   : 32.9
+ram_free_gb    : 30.2
+--------------------------------------------------------------
+HF_HOME        : /home/lucas/Proyecto1_IA_Generativa/.hf_cache
+ca_bundle      : no presente (normal)
+==============================================================
+dispositivo: cuda · SMOKE_TEST: False · AMP: True · checkpoints en: /home/lucas/Proyecto1_IA_Generativa/checkpoints
+
+--- [04_sft] celda 3/16 ---
+
+--- [04_sft] celda 4/16 ---
+base: pretrain_wide.pt · paso 5,000 · val loss (TinyStories) 2.311
+forma: {'vocab_size': 8192, 'block_size': 256, 'n_embd': 256, 'n_head': 8, 'n_layer': 2, 'dropout': 0.1}
+
+--- [04_sft] celda 5/16 ---
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+registros: train 100,000 · val 2,000 · cargados en 13s
+fracción de registros con cada encabezado: {'Features': '55%', 'Words': '67%', 'Summary': '100%', 'Random sentence': '30%'}
+separador más común: 'Story: \n' (46% de los registros)
+
+--- un registro de ejemplo ---
+Features: Dialogue
+Words: quit, oak, gloomy
+Summary: Sara and Ben were playing in the park, but Sara wanted to go home because it was cold and dark. Ben convinced her to stay and play, but eventually agreed to go home and have hot cocoa.
+Story: 
+
+Sara and Ben were playing in the park. They liked to climb the big oak tree and pretend they were birds. They made nests with leaves and twigs and sang songs.
+But today, the sky was gloomy and the wind was cold. Sara felt sad and cold. She wanted to go home and have some hot cocoa.
+"Ben, I want to quit," she said. "It's too cold and dark. Let's go home."
+Ben looked at Sara and frowned. He liked the oak tree and the park. He wanted to stay and play.
+"No, Sara, don't quit," he said. "It's fun here. Look, there's a squirrel. Let's chase it."
+Sara shook her head. She didn't want to chase the squirrel. She wanted to go home and have some hot cocoa.
+"Please, Ben, let's go home," she said. "We can play here another day. I'm cold and hungry."
+Ben saw that Sara was shivering and looked unhappy. He loved his sister and didn't want her to be sad. He nodded and smiled.
+"Okay, Sara, let's go home," he said. "We can have some hot cocoa and cookies. And we can play with our toys."
+Sara hugged Ben and thanked him. They climbed down the oak tree and ran to their mom, who was waiting for them. They told her about their adventure and asked for some hot cocoa and cookies. Mom smiled and agreed. She was proud of her children for being brave and kind. They went home and had a cozy and happy time.
+
+--- [04_sft] celda 6/16 ---
+tokens por registro: mediana 244 · p90 372 · máx 1271
+registros que se truncan con block_size = 256: 40.4%
+tokens de SFT disponibles: 26.87M
+
+--- [04_sft] celda 7/16 ---
+
+--- [04_sft] celda 8/16 ---
+
+--- [04_sft] celda 9/16 ---
+SFTConfig(max_steps=1500, batch_size=64, eval_interval=150, eval_iters=40, lr=0.0001, min_lr=1e-05, warmup_steps=50, weight_decay=0.1, grad_clip=1.0, lora_rank=0, lora_alpha=0.0)
+SFTConfig(max_steps=1500, batch_size=64, eval_interval=150, eval_iters=40, lr=0.001, min_lr=0.0001, warmup_steps=50, weight_decay=0.1, grad_clip=1.0, lora_rank=8, lora_alpha=16)
+posiciones por corrida (con relleno): 24.6M · ≈ 0.96 épocas de registros
+
+--- [04_sft] celda 10/16 ---
+[completo] parámetros entrenables: 5,846,528 de 5,846,528 (100.00%)
+[completo] paso     0 | instruct val 3.204 | liso val 2.294 | uso(W+S) 0.17 | arranca(sW) 0.00 |  0.0 min
+[completo] paso   150 | instruct val 2.272 | liso val 2.494 |  0.2 min
+[completo] paso   300 | instruct val 2.220 | liso val 2.504 | uso(W+S) 0.58 | arranca(sW) 0.75 |  0.3 min
+[completo] paso   450 | instruct val 2.195 | liso val 2.510 |  0.5 min
+[completo] paso   600 | instruct val 2.174 | liso val 2.504 | uso(W+S) 0.33 | arranca(sW) 0.75 |  0.7 min
+[completo] paso   750 | instruct val 2.156 | liso val 2.490 |  0.8 min
+[completo] paso   900 | instruct val 2.142 | liso val 2.483 | uso(W+S) 0.58 | arranca(sW) 1.00 |  1.0 min
+[completo] paso 1,050 | instruct val 2.134 | liso val 2.481 |  1.2 min
+[completo] paso 1,200 | instruct val 2.126 | liso val 2.477 | uso(W+S) 0.75 | arranca(sW) 1.00 |  1.3 min
+[completo] paso 1,350 | instruct val 2.121 | liso val 2.474 |  1.5 min
+[completo] paso 1,500 | instruct val 2.118 | liso val 2.475 | uso(W+S) 0.58 | arranca(sW) 1.00 |  1.7 min
+
+--- [04_sft] celda 11/16 ---
+[lora] parámetros entrenables: 118,784 de 5,965,312 (1.99%)
+[lora] paso     0 | instruct val 3.204 | liso val 2.294 | uso(W+S) 0.17 | arranca(sW) 0.00 |  0.0 min
+[lora] paso   150 | instruct val 2.482 | liso val 2.565 |  0.2 min
+[lora] paso   300 | instruct val 2.432 | liso val 2.535 | uso(W+S) 0.42 | arranca(sW) 0.25 |  0.3 min
+[lora] paso   450 | instruct val 2.407 | liso val 2.543 |  0.5 min
+[lora] paso   600 | instruct val 2.391 | liso val 2.528 | uso(W+S) 0.17 | arranca(sW) 0.75 |  0.6 min
+[lora] paso   750 | instruct val 2.379 | liso val 2.523 |  0.8 min
+[lora] paso   900 | instruct val 2.369 | liso val 2.518 | uso(W+S) 0.33 | arranca(sW) 0.25 |  0.9 min
+[lora] paso 1,050 | instruct val 2.363 | liso val 2.526 |  1.1 min
+[lora] paso 1,200 | instruct val 2.358 | liso val 2.527 | uso(W+S) 0.42 | arranca(sW) 0.25 |  1.2 min
+[lora] paso 1,350 | instruct val 2.354 | liso val 2.524 |  1.4 min
+[lora] paso 1,500 | instruct val 2.353 | liso val 2.518 | uso(W+S) 0.33 | arranca(sW) 0.50 |  1.6 min
+[lora] LoRA fusionado · máx |Δlogits| envuelto vs fusionado = 2.00e-05
+
+--- [04_sft] celda 12/16 ---
+
+--- [04_sft] celda 13/16 ---
+====================================================================================================
+PLANTILLA 'Words + Story' · prompt: 'Words: dragon, happy, forest\nStory:'
+
+--- base · usa ['dragon'] · termina ---
+"Mr Jones! Are you so big? What's wrong?"
+
+Mama: "I'll bring to the dragon inside the candle".
+
+Slowly, the dragon kept walking away and soon grew stronger. He was patient and louder, stretching his arms, as he heard his eyes, faintpping in the air, mulisephant. 
+
+They remembered their story from line of behaving and smiled. He got into tutor's welcome and true. Grandma said, "That's an amazing gift. I had a special tool to celebrate now!"
+
+The next night, Little Jenna and John just smiled.
+
+--- completo · usa ['happy', 'forest'] · termina ---
+Once upon a time, there was a little bear named Benny. Benny loved to hop around the forest near his home. One day, Benny saw a beautiful bird and wanted to make a tree stuck. Benny was happy and replied, "I can't find my way home and I can't find my way home."
+Benny decided to help his friend, a big bird named harder. "Let's open it and find out inside," said Benny. "Let's put a blanket and a comfortable spot inside."
+Benny jumped and sat down carefully. "Okay," replied Benny. "I will s attached to his chest instead," said Benny. "They might be safer to because it's safe now."
+From then on, Benny and Benny were more careful around the forest and every night before it got home. They were the best of friends and had a successful dream that they could spend together.
+
+--- lora · usa ['happy'] · termina ---
+Lily loved to hide with her friend, Timmy. One winter day, Lily took her doll everywhere to play with it. But she accidentally kicked it and Lily's armful arm. Inside, she found a secret which he was trunk dirt inside. They became stuffed and they were very happy, because they were solved the problem.
+Lily was happy to have her toys harder and when they left. When they got to play with, they knew that together way to see someone else was still playing with them. They were happy to be two friends with big mice and they liked to play together on the swings and make them feel better.
+
+====================================================================================================
+PLANTILLA 'solo Words' · prompt: 'Words: dragon, happy, forest'
+
+--- base · usa ['happy', 'forest'] · termina ---
+, and it would be so loud that day he was always bigger than the other animals were talking.
+
+One day Sam's parents said to him, "Let's go and see where the other person can find my secret from here!" 
+
+Make wasn't sure, he was right, but he wanted his head on one last week, he said yes! 
+
+The end. 
+
+The first friend was happy with his tutor, and they both walked around the forest, asking amazement to be his grandmother. 
+
+From then on, the two friends came to play together together every day and had a lot of strength.
+
+--- completo · usa ['forest'] · termina ---
+, good
+Summary: Tim learns to share a bigger map by making his friend happy ending.
+Story: Once upon a time, in a big forest, there was a green forest. On one last, he met a small rabbit. The rabbit felt happy and grateful.
+One day, a little bird came to the forest. The bear wanted to help the rabbit, so he took his help. He pushed the rock down and matched together, and the bird became best friends. From that day on, the bear and two friends played hide together every day.
+
+--- lora · usa ['dragon'] · termina ---
+, good
+Summary: Tim observes a game where he needed food for the dragon but it to move and it is an igloo with a heart. Tim's mom and dad pride and is glad that their hero helps them take the dirt away.
+Summary: Tim and his mom makes him a little head on a big round spot under the table,p harder, and Tim line up his imagination and skirts with his tutor. 
+
+Dort: Timmy remembers a modern treehouse he plays his hockey ball and sits in two blocks with big buildings and smiles. Then, Tim goes to his room and finds his strength.
+
+
+--- [04_sft] celda 14/16 ---
+                        arranca cuento  termina  uso de palabras  piso de azar  largo (palabras)  uso − piso
+modelo   plantilla                                                                                          
+base     Words + Story            0.93     0.93             0.19          0.08            116.72        0.11
+         solo Words               0.00     0.85             0.31          0.09            132.18        0.22
+completo Words + Story            1.00     0.93             0.53          0.21            151.97        0.32
+         solo Words               0.93     0.82             0.29          0.05            105.12        0.24
+lora     Words + Story            0.97     0.85             0.36          0.11            164.10        0.25
+         solo Words               0.38     0.68             0.36          0.12            140.90        0.24
+
+--- [04_sft] celda 15/16 ---
+         uso − piso (media) IC95 inf IC95 sup le gana al azar
+base                   0.11     0.00     0.19            True
+completo               0.32     0.14     0.46            True
+lora                   0.25     0.17     0.33            True
+
+--- [04_sft] celda 16/16 ---
+                                     completo        lora
+entrenables                       5,846,528.0   118,784.0
+total                             5,846,528.0 5,965,312.0
+fracción entrenable                       1.0      0.0199
+grad + AdamW (MB, analítico)             70.2         1.4
+memoria pico GPU al entrenar (MB)     3,064.5     2,922.3
+segundos por paso                      0.0665      0.0621
+
+                                base  completo  lora  LoRA / completo
+pérdida Instruct val           3.204     2.118 2.353            0.784
+pérdida TinyStories liso val   2.294     2.475 2.518            1.242
+contenido: uso − piso (W+S)    0.108     0.317 0.250            0.680
+forma: arranca cuento (solo W) 0.000     0.925 0.375            0.405
+forma: termina (W+S)           0.925     0.925 0.850              NaN
+
+Etapa 4 lista en 8.4 min → outputs/notebooks/04_sft.ipynb
+
+==============================================================================
+Etapa 5 · Juez local (Ollama + qwen3:4b)  (05_judge.ipynb)
+==============================================================================
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+
+--- [05_judge] celda 1/16 ---
+
+--- [05_judge] celda 2/16 ---
+==============================================================
+ENTORNO
+==============================================================
+os             : Linux 6.18.48-gentoo-lean
+python         : 3.14.7
+venv           : /home/lucas/Proyecto1_IA_Generativa/.venv
+cpu            : AMD Ryzen 9 8945HX with Radeon Graphics
+logical_cores  : 32
+torch          : 2.14.0+cu130
+torch_threads  : 16
+cuda_available : True
+gpu            : NVIDIA GeForce RTX 5070 Laptop GPU
+gpu_memory_gb  : 8.08
+ram_total_gb   : 32.9
+ram_free_gb    : 30.2
+--------------------------------------------------------------
+HF_HOME        : /home/lucas/Proyecto1_IA_Generativa/.hf_cache
+ca_bundle      : no presente (normal)
+==============================================================
+dispositivo: cuda · SMOKE_TEST: False · checkpoints en: /home/lucas/Proyecto1_IA_Generativa/checkpoints
+
+--- [05_judge] celda 3/16 ---
+
+--- [05_judge] celda 4/16 ---
+base (ancho)   pretrain_wide.pt   paso  5,000 · 5.85M parámetros
+profundo       pretrain_deep.pt   paso  5,000 · 5.42M parámetros
+SFT completo   sft_final.pt       paso  1,500 · 5.85M parámetros
+SFT LoRA       sft_lora.pt        paso  1,500 · 5.85M parámetros
+
+--- [05_judge] celda 5/16 ---
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+              val loss (TinyStories liso)  val ppl
+base (ancho)                        2.334   10.316
+profundo                            2.359   10.584
+SFT completo                        2.574   13.113
+SFT LoRA                            2.544   12.731
+
+--- [05_judge] celda 6/16 ---
+tipo                       cuento  instrucción
+fuente                                        
+base (ancho)                 24.0         24.0
+profundo                     24.0         24.0
+SFT completo                 24.0         24.0
+SFT LoRA                     24.0         24.0
+ancla: cuento real           24.0          NaN
+ancla: palabras mezcladas    24.0          NaN
+ancla: instrucción ajena      NaN         24.0
+
+ejemplo: Once upon a time, there was a little girl named Lily. She loved to play with her dolls and took her doll everywhere she would play with her dolls. One day, Lily found a big, red dress and a picture of a fluffy teddy bear. She picked it up and put it in her box. When she finished washing, she snuggle
+
+--- [05_judge] celda 7/16 ---
+modelo de referencia para la NLL por texto: base (ancho)
+fuente
+base (ancho)                2.705
+profundo                    3.110
+SFT completo                2.619
+SFT LoRA                    2.844
+ancla: cuento real          2.392
+ancla: palabras mezcladas   8.780
+ancla: instrucción ajena    2.392
+[?2026h[?25l[1Gpulling manifest ⠋ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠙ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠹ [K[?25h[?2026l
+--- [05_judge] celda 8/16 ---
+[?2026h[?25l[1Gpulling manifest ⠋ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠙ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠹ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠸ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠼ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠴ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠸ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠼ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠦ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠧ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠴ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠦ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠧ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠇ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠏ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠋ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠇ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠏ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠙ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠹ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠋ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠙ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠹ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠸ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠼ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠴ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠸ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠼ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠦ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠧ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠴ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠦ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠧ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠇ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest [K
+pulling 3e4cb1417446:   0% ▕                  ▏ 3.7 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   0% ▕                  ▏  11 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest ⠇ [K[?25h[?2026l[?2026h[?25l[1Gpulling manifest [K
+pulling 3e4cb1417446:   0% ▕                  ▏ 3.7 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   0% ▕                  ▏  11 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   1% ▕                  ▏  17 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   1% ▕                  ▏  29 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   2% ▕                  ▏  41 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   1% ▕                  ▏  17 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   1% ▕                  ▏  29 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   2% ▕                  ▏  41 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   2% ▕                  ▏  45 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   2% ▕                  ▏  56 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   3% ▕                  ▏  65 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   2% ▕                  ▏  45 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   2% ▕                  ▏  56 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   3% ▕                  ▏  65 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   3% ▕                  ▏  69 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   3% ▕                  ▏  81 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   4% ▕                  ▏  88 MB/2.5 GB   84 MB/s     28s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   3% ▕                  ▏  69 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   3% ▕                  ▏  81 MB/2.5 GB                  [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   4% ▕                  ▏  95 MB/2.5 GB   84 MB/s     28s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   4% ▕                  ▏ 107 MB/2.5 GB   84 MB/s     28s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   4% ▕                  ▏  88 MB/2.5 GB   84 MB/s     28s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   4% ▕                  ▏  95 MB/2.5 GB   84 MB/s     28s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   4% ▕                  ▏ 107 MB/2.5 GB   84 MB/s     28s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   5% ▕                  ▏ 116 MB/2.5 GB   84 MB/s     28s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   5% ▕                  ▏ 122 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   5% ▕                  ▏ 132 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   5% ▕                  ▏ 116 MB/2.5 GB   84 MB/s     28s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   5% ▕                  ▏ 122 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   6% ▕█                 ▏ 143 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   6% ▕█                 ▏ 148 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   5% ▕                  ▏ 132 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   6% ▕█                 ▏ 143 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   6% ▕█                 ▏ 148 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   6% ▕█                 ▏ 157 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   7% ▕█                 ▏ 167 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   7% ▕█                 ▏ 174 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   6% ▕█                 ▏ 157 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   7% ▕█                 ▏ 167 MB/2.5 GB   84 MB/s     27s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   7% ▕█                 ▏ 174 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   7% ▕█                 ▏ 183 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   8% ▕█                 ▏ 194 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   8% ▕█                 ▏ 200 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   7% ▕█                 ▏ 183 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   8% ▕█                 ▏ 194 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   8% ▕█                 ▏ 200 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   8% ▕█                 ▏ 209 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   9% ▕█                 ▏ 221 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   9% ▕█                 ▏ 226 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   8% ▕█                 ▏ 209 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   9% ▕█                 ▏ 221 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   9% ▕█                 ▏ 226 MB/2.5 GB   87 MB/s     26s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   9% ▕█                 ▏ 234 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  10% ▕█                 ▏ 245 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  10% ▕█                 ▏ 250 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:   9% ▕█                 ▏ 234 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  10% ▕█                 ▏ 245 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  10% ▕█                 ▏ 262 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  11% ▕█                 ▏ 272 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  10% ▕█                 ▏ 250 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  10% ▕█                 ▏ 262 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  11% ▕█                 ▏ 272 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  11% ▕██                ▏ 277 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  11% ▕██                ▏ 286 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  12% ▕██                ▏ 297 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  11% ▕██                ▏ 277 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  11% ▕██                ▏ 286 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  12% ▕██                ▏ 297 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  12% ▕██                ▏ 303 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  13% ▕██                ▏ 313 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  13% ▕██                ▏ 323 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  12% ▕██                ▏ 303 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  13% ▕██                ▏ 313 MB/2.5 GB   87 MB/s     25s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  13% ▕██                ▏ 323 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  13% ▕██                ▏ 328 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  14% ▕██                ▏ 339 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  14% ▕██                ▏ 349 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  13% ▕██                ▏ 328 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  14% ▕██                ▏ 339 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  14% ▕██                ▏ 349 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  14% ▕██                ▏ 354 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  15% ▕██                ▏ 365 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  15% ▕██                ▏ 376 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  14% ▕██                ▏ 354 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  15% ▕██                ▏ 365 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  15% ▕██                ▏ 376 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  15% ▕██                ▏ 381 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  16% ▕██                ▏ 392 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  16% ▕██                ▏ 399 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  15% ▕██                ▏ 381 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  16% ▕██                ▏ 392 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  16% ▕██                ▏ 399 MB/2.5 GB   87 MB/s     24s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  16% ▕██                ▏ 406 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  17% ▕██                ▏ 416 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  17% ▕███               ▏ 428 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  16% ▕██                ▏ 406 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  17% ▕██                ▏ 416 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  17% ▕███               ▏ 428 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  17% ▕███               ▏ 433 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  18% ▕███               ▏ 443 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  18% ▕███               ▏ 452 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  17% ▕███               ▏ 433 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  18% ▕███               ▏ 443 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  18% ▕███               ▏ 452 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  18% ▕███               ▏ 457 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  19% ▕███               ▏ 469 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  19% ▕███               ▏ 479 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  18% ▕███               ▏ 457 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  19% ▕███               ▏ 469 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  19% ▕███               ▏ 479 MB/2.5 GB   87 MB/s     23s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  19% ▕███               ▏ 485 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  20% ▕███               ▏ 495 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  20% ▕███               ▏ 505 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  19% ▕███               ▏ 485 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  20% ▕███               ▏ 495 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  20% ▕███               ▏ 505 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  20% ▕███               ▏ 511 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  21% ▕███               ▏ 521 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  21% ▕███               ▏ 530 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  20% ▕███               ▏ 511 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  21% ▕███               ▏ 521 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  21% ▕███               ▏ 530 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  22% ▕███               ▏ 537 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  22% ▕███               ▏ 546 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  22% ▕████              ▏ 556 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  22% ▕███               ▏ 537 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  22% ▕███               ▏ 546 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  22% ▕████              ▏ 561 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  23% ▕████              ▏ 572 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  22% ▕████              ▏ 556 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  22% ▕████              ▏ 561 MB/2.5 GB   87 MB/s     22s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  23% ▕████              ▏ 572 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  23% ▕████              ▏ 583 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  24% ▕████              ▏ 589 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  24% ▕████              ▏ 598 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  23% ▕████              ▏ 583 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  24% ▕████              ▏ 589 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  24% ▕████              ▏ 598 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  24% ▕████              ▏ 609 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  25% ▕████              ▏ 614 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  25% ▕████              ▏ 625 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  24% ▕████              ▏ 609 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  25% ▕████              ▏ 614 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  25% ▕████              ▏ 625 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  25% ▕████              ▏ 634 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  26% ▕████              ▏ 641 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  26% ▕████              ▏ 651 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  25% ▕████              ▏ 634 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  26% ▕████              ▏ 641 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  26% ▕████              ▏ 651 MB/2.5 GB   87 MB/s     21s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  27% ▕████              ▏ 661 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  27% ▕████              ▏ 667 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  27% ▕████              ▏ 677 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  27% ▕████              ▏ 661 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  27% ▕████              ▏ 667 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  27% ▕████              ▏ 677 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  28% ▕████              ▏ 687 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  28% ▕████              ▏ 693 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  28% ▕█████             ▏ 702 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  28% ▕████              ▏ 687 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  28% ▕████              ▏ 693 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  28% ▕█████             ▏ 702 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  29% ▕█████             ▏ 713 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  29% ▕█████             ▏ 719 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  29% ▕█████             ▏ 729 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  29% ▕█████             ▏ 713 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  29% ▕█████             ▏ 719 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  29% ▕█████             ▏ 729 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  30% ▕█████             ▏ 739 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  30% ▕█████             ▏ 744 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  30% ▕█████             ▏ 752 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  30% ▕█████             ▏ 739 MB/2.5 GB   87 MB/s     20s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  30% ▕█████             ▏ 744 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  30% ▕█████             ▏ 752 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  31% ▕█████             ▏ 764 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  31% ▕█████             ▏ 769 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  31% ▕█████             ▏ 779 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  31% ▕█████             ▏ 764 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  31% ▕█████             ▏ 769 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  31% ▕█████             ▏ 779 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  32% ▕█████             ▏ 790 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  32% ▕█████             ▏ 795 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  32% ▕█████             ▏ 806 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  32% ▕█████             ▏ 790 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  32% ▕█████             ▏ 795 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  32% ▕█████             ▏ 806 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  33% ▕█████             ▏ 815 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  33% ▕█████             ▏ 821 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  33% ▕█████             ▏ 831 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  33% ▕█████             ▏ 815 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  33% ▕█████             ▏ 821 MB/2.5 GB   87 MB/s     19s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  33% ▕█████             ▏ 831 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  34% ▕██████            ▏ 841 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  34% ▕██████            ▏ 844 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  34% ▕██████            ▏ 853 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  34% ▕██████            ▏ 841 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  34% ▕██████            ▏ 844 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  34% ▕██████            ▏ 853 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  35% ▕██████            ▏ 863 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  35% ▕██████            ▏ 868 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  35% ▕██████            ▏ 877 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  35% ▕██████            ▏ 863 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  35% ▕██████            ▏ 868 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  35% ▕██████            ▏ 877 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  36% ▕██████            ▏ 888 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  36% ▕██████            ▏ 893 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  36% ▕██████            ▏ 904 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  36% ▕██████            ▏ 888 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  36% ▕██████            ▏ 893 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  36% ▕██████            ▏ 904 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  37% ▕██████            ▏ 915 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  37% ▕██████            ▏ 919 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  37% ▕██████            ▏ 930 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  37% ▕██████            ▏ 915 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  37% ▕██████            ▏ 919 MB/2.5 GB   87 MB/s     18s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  37% ▕██████            ▏ 930 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  38% ▕██████            ▏ 941 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  38% ▕██████            ▏ 946 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  38% ▕██████            ▏ 957 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  38% ▕██████            ▏ 941 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  38% ▕██████            ▏ 946 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  38% ▕██████            ▏ 957 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  39% ▕██████            ▏ 967 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  39% ▕███████           ▏ 972 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  39% ▕███████           ▏ 983 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  39% ▕██████            ▏ 967 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  39% ▕███████           ▏ 972 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  40% ▕███████           ▏ 991 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  40% ▕███████           ▏ 997 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  39% ▕███████           ▏ 983 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  40% ▕███████           ▏ 991 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  40% ▕███████           ▏ 997 MB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  40% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  41% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  41% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  40% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     17s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  41% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  41% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  41% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  42% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  42% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  41% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  42% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  42% ▕███████           ▏ 1.0 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  42% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  43% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  43% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  42% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  43% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  43% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  44% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  44% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  44% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  44% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  44% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     16s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  45% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  45% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  44% ▕███████           ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  45% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  45% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  45% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  46% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  46% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  45% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  46% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  46% ▕████████          ▏ 1.1 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  46% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  47% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  47% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  46% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  47% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  47% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  47% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  48% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  48% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  47% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     15s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  48% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  48% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  49% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  48% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  48% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  49% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  49% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  49% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  50% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  49% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  49% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  50% ▕████████          ▏ 1.2 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  50% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  50% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  51% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  50% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  50% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  51% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     14s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  51% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  51% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  52% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  51% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  51% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  52% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  52% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  52% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  53% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  52% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  52% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  53% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  53% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  54% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  54% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  53% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  54% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  54% ▕█████████         ▏ 1.3 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  54% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  55% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  55% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  54% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     13s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  55% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  55% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  56% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  55% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  55% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  56% ▕█████████         ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  56% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  56% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  57% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  56% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  56% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  57% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  57% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  57% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  58% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  57% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  57% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  58% ▕██████████        ▏ 1.4 GB/2.5 GB   87 MB/s     12s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  58% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  58% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  59% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  58% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  58% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  59% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  59% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  60% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  60% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  59% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  60% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  60% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  61% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  60% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  60% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  61% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  61% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  61% ▕███████████       ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  62% ▕███████████       ▏ 1.5 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  61% ▕██████████        ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  61% ▕███████████       ▏ 1.5 GB/2.5 GB   87 MB/s     11s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  62% ▕███████████       ▏ 1.5 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  62% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  62% ▕███████████       ▏ 1.5 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  62% ▕███████████       ▏ 1.5 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  62% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  63% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  63% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  63% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  63% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  63% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  64% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  64% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  63% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  64% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  64% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  64% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  65% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  65% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  64% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  65% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  65% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  66% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  65% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s     10s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  65% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  66% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  66% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  66% ▕███████████       ▏ 1.7 GB/2.5 GB   87 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  67% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  66% ▕███████████       ▏ 1.6 GB/2.5 GB   87 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  66% ▕███████████       ▏ 1.7 GB/2.5 GB   87 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  67% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  67% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  67% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  68% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  67% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  67% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  68% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  68% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  68% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  69% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  68% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      9s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  68% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  69% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  69% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  69% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  70% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  69% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  69% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  70% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  70% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  70% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  71% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  70% ▕████████████      ▏ 1.7 GB/2.5 GB   88 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  70% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  71% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  71% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  71% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  72% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  71% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  71% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  72% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  72% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  72% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  72% ▕████████████      ▏ 1.8 GB/2.5 GB   87 MB/s      8s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  72% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  73% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  73% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  73% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  73% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  73% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  74% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  74% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  73% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  74% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  74% ▕█████████████     ▏ 1.8 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  74% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  75% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  75% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  74% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  75% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  75% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      7s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  75% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  76% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  76% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  75% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  76% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  76% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  77% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  77% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  77% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  77% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  77% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  77% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  78% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  78% ▕██████████████    ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  78% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  78% ▕█████████████     ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  78% ▕██████████████    ▏ 1.9 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  79% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  79% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  78% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  79% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      6s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  79% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  79% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  80% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  80% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  79% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  80% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  80% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  80% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  81% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  81% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  80% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  81% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  81% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  81% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  82% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  82% ▕██████████████    ▏ 2.1 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  81% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  82% ▕██████████████    ▏ 2.0 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  82% ▕██████████████    ▏ 2.1 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  82% ▕██████████████    ▏ 2.1 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  83% ▕██████████████    ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  83% ▕██████████████    ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  82% ▕██████████████    ▏ 2.1 GB/2.5 GB   87 MB/s      5s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  83% ▕██████████████    ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  83% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  84% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  83% ▕██████████████    ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  83% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  84% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  84% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  84% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  85% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  84% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  84% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  85% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  85% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  85% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  86% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  85% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  85% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  86% ▕███████████████   ▏ 2.1 GB/2.5 GB   87 MB/s      4s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  86% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  87% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  87% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  86% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  87% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  87% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  87% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  87% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  88% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  87% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  87% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  88% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  88% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  89% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  89% ▕████████████████  ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  88% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  89% ▕███████████████   ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  89% ▕████████████████  ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  90% ▕████████████████  ▏ 2.2 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  89% ▕████████████████  ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  89% ▕████████████████  ▏ 2.2 GB/2.5 GB   87 MB/s      3s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  90% ▕████████████████  ▏ 2.2 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  90% ▕████████████████  ▏ 2.2 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  90% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  91% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  90% ▕████████████████  ▏ 2.2 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  90% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  91% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  91% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  91% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  92% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  91% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  91% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  92% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  93% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  92% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  92% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  93% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  93% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  93% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  94% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  93% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      2s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  93% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  94% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  94% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  94% ▕████████████████  ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  95% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  94% ▕████████████████  ▏ 2.3 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  94% ▕████████████████  ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  95% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  95% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  95% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  95% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  95% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  95% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  95% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  96% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  96% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  96% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  96% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  96% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  96% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      1s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  97% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  97% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  97% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  97% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  97% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  97% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  98% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  98% ▕█████████████████ ▏ 2.4 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  98% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  98% ▕█████████████████ ▏ 2.4 GB/2.5 GB   87 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  98% ▕█████████████████ ▏ 2.4 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  98% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  99% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  99% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  99% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  99% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  99% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446:  99% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠋ [K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K[?25h[?2026l[?2026h[?25l[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠋ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠙ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠹ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠸ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠙ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠹ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠸ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠼ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠴ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠦ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠼ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠴ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠧ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠇ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠦ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠧ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠇ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠏ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠋ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠙ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠏ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠋ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠹ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest [K
+writing manifest [K
+success [K[?25h[?2026l
+juez: qwen3:4b
+[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠙ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest ⠹ [K[?25h[?2026l[?2026h[?25l[A[A[1Gpulling manifest [K
+pulling 3e4cb1417446: 100% ▕█████████████████ ▏ 2.5 GB/2.5 GB   86 MB/s      0s[K
+verifying sha256 digest [K
+writing manifest [K
+success [K[?25h[?2026l
+
+--- [05_judge] celda 9/16 ---
+
+--- [05_judge] celda 10/16 ---
+  25/264 evaluados · 43s
+  50/264 evaluados · 57s
+  75/264 evaluados · 68s
+  100/264 evaluados · 82s
+  125/264 evaluados · 93s
+  150/264 evaluados · 107s
+  175/264 evaluados · 119s
+  200/264 evaluados · 132s
+  225/264 evaluados · 145s
+  250/264 evaluados · 158s
+listo en 165s
+
+--- [05_judge] celda 11/16 ---
+estado                      ok  All
+fuente                             
+SFT LoRA                    48   48
+SFT completo                48   48
+ancla: cuento real          24   24
+ancla: instrucción ajena    24   24
+ancla: palabras mezcladas   24   24
+base (ancho)                48   48
+profundo                    48   48
+All                        264  264
+
+respuestas que necesitaron reintento: 0.0%
+
+--- [05_judge] celda 12/16 ---
+                                        n  gramática gramática IC95  creatividad creatividad IC95  consistencia consistencia IC95  uso de palabras  NLL (ref)  obediencia obediencia IC95
+fuente                    tipo                                                                                                                                                           
+base (ancho)              cuento       24       1.96     [1.9, 2.0]         3.08       [2.9, 3.3]          2.17        [2.0, 2.4]              NaN       2.29         NaN             NaN
+                          instrucción  24       1.75     [1.6, 1.9]         2.54       [2.2, 2.8]          1.71        [1.5, 1.9]             0.18       3.11        2.83      [2.3, 3.3]
+profundo                  cuento       24       1.92     [1.8, 2.0]         2.92       [2.8, 3.0]          1.96        [1.9, 2.0]              NaN       2.69         NaN             NaN
+                          instrucción  24       1.62     [1.5, 1.7]         2.25       [2.1, 2.4]          1.58        [1.4, 1.7]             0.21       3.53        2.50      [2.0, 3.0]
+SFT completo              cuento       24       2.00     [2.0, 2.0]         2.96       [2.8, 3.1]          1.88        [1.8, 2.0]              NaN       2.79         NaN             NaN
+                          instrucción  24       2.00     [2.0, 2.0]         2.92       [2.8, 3.0]          1.92        [1.8, 2.0]             0.56       2.45        4.12      [3.9, 4.4]
+SFT LoRA                  cuento       24       1.96     [1.9, 2.0]         2.92       [2.8, 3.0]          1.83        [1.7, 2.0]              NaN       2.86         NaN             NaN
+                          instrucción  24       2.00     [2.0, 2.0]         3.00       [3.0, 3.0]          1.92        [1.8, 2.0]             0.33       2.83        3.67      [3.2, 4.0]
+ancla: cuento real        cuento       24       8.29     [8.0, 8.5]         6.79       [6.5, 7.1]          8.83        [8.6, 9.0]              NaN       2.39         NaN             NaN
+ancla: palabras mezcladas cuento       24       1.54     [1.3, 1.8]         2.50       [2.2, 2.7]          1.54        [1.3, 1.8]              NaN       8.78         NaN             NaN
+ancla: instrucción ajena  instrucción  24       7.38     [6.9, 7.7]         5.12       [4.7, 5.5]          8.04        [7.5, 8.5]             0.12       2.39        5.75      [4.9, 6.6]
+
+--- [05_judge] celda 13/16 ---
+
+--- [05_judge] celda 14/16 ---
+                                        base (ancho)  profundo  SFT completo  SFT LoRA
+val loss (TinyStories liso)                    2.334     2.359         2.574     2.544
+val ppl                                       10.316    10.584        13.113    12.731
+gramática                                      1.958     1.917         2.000     1.958
+creatividad                                    3.083     2.917         2.958     2.917
+consistencia                                   2.167     1.958         1.875     1.833
+obediencia                                     2.833     2.500         4.125     3.667
+uso de palabras                                0.181     0.208         0.556     0.333
+rango ppl                                      1.000     2.000         4.000     3.000
+rango juez (gram+cons)                         1.000     2.500         2.500     4.000
+Etapa 2 · recuerdo: aciertos greedy            0.200     0.200           NaN       NaN
+Etapa 2 · recuerdo: P(respuesta) media         0.121     0.101           NaN       NaN
+Etapa 2 · consistencia: reuso medio            0.520     0.580           NaN       NaN
+Etapa 4 · pérdida Instruct val                 3.204       NaN         2.118     2.353
+
+--- [05_judge] celda 15/16 ---
+Spearman entre NLL de referencia por texto y nota del juez (negativo = coinciden):
+              modelos  modelos + anclas
+gramática       -0.35             -0.49
+creatividad     -0.37             -0.49
+consistencia    -0.44             -0.52
+obediencia      -0.60             -0.55
+
+--- [05_judge] celda 16/16 ---
+Spearman obediencia del juez vs. uso de palabras: 0.23
+----------------------------------------------------------------------------------------------------
+ancla: instrucción ajena · uso de palabras 0.00 · obediencia del juez 9
+Once upon a time, a little boy and his sister were playing tag in their old house. The little boy chased his sister around the kitchen. He was so close to catching her, but when he looked ahead, he noticed something.
+
+The little boy saw an old stove in the corner of the room. He wanted to know what it was, so he walked closer to it. Suddenly, he heard his sister calling him.
+
+Little Boy: "What is 
+----------------------------------------------------------------------------------------------------
+ancla: instrucción ajena · uso de palabras 0.00 · obediencia del juez 7
+Once upon a time, a bald man named Max promised a 3 year old child: "Wait till spring, then you will see something special."
+
+The little child smiled and asked "What can I see?"
+
+Max said: "You will see lots of beautiful flowers - pink, yellow, and purple."
+
+The child smiled and said, "Can I pick them?"
+
+Max nodded and said: "Yes! Have fun picking as many flowers as you want."
+
+The anxious child w
+----------------------------------------------------------------------------------------------------
+ancla: instrucción ajena · uso de palabras 0.00 · obediencia del juez 7
+One day, Jack was walking in the park and he noticed a jolly old man sitting on a park bench. Jack went up to him and said,"Hi mister, whatcha doing?" The old man replied,"I am watching the birds. It's so peaceful here."
+
+Jack looked around with amazement. He saw a bright blue sky, a big tree and lots of birds flying around. Then he noticed something zip past his head. It was a little yellow bird 
+
+Etapa 5 lista en 5.6 min → outputs/notebooks/05_judge.ipynb
+
+==============================================================================
+Todo listo en 31.2 min
+==============================================================================
+Notebooks ejecutados : outputs/notebooks/
+Resultados para el informe (sin .pt): outputs/resultados.zip
