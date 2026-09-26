@@ -153,6 +153,19 @@ def device() -> str:
     return "cuda" if has_cuda() else "cpu"
 
 
+def smoke_test(default: bool) -> bool:
+    """
+    `SMOKE_TEST` de una etapa. La variable de entorno `LAB_SMOKE_TEST` (1/0) manda sobre `default`: así
+    `run_all.py` corre todas las etapas en el mismo modo. Sin la variable, cada etapa decide como siempre.
+    """
+    value = os.environ.get("LAB_SMOKE_TEST", "").strip().lower()
+    if value in {"1", "true", "si", "sí", "yes"}:
+        return True
+    if value in {"0", "false", "no"}:
+        return False
+    return default
+
+
 def diagnostics() -> dict:
     """Reemplazo en Python de `!nvidia-smi`. Funciona bien sin GPU también."""
     info = {

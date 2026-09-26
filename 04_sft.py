@@ -57,7 +57,7 @@ from torch.nn import functional as F
 from data import load_instruct_records, load_tinystories
 
 DEVICE = environment.device()
-SMOKE_TEST = DEVICE == "cpu"  # CPU: validar el pipeline. GPU: la corrida de verdad. Se puede forzar a mano.
+SMOKE_TEST = environment.smoke_test(DEVICE == "cpu")  # CPU: validar el pipeline. GPU: la corrida de verdad. LAB_SMOKE_TEST fuerza.
 SEED = 1337
 
 CKPT_DIR = environment.CHECKPOINTS / "smoke" if SMOKE_TEST else environment.CHECKPOINTS

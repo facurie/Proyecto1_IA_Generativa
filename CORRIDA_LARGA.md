@@ -1,4 +1,30 @@
-# Corrida larga: de punta a punta en Colab
+# Corrida larga: de punta a punta
+
+## En tu máquina: un solo comando
+
+```bash
+python -m venv .venv
+# Windows:  .venv\Scripts\activate      Linux/Mac:  source .venv/bin/activate
+python -m pip install -r requirements.txt
+python run_all.py --modo prueba          # primero: valida todo el pipeline en minutos
+python run_all.py --modo completo        # después: la corrida larga
+```
+
+- `run_all.py` ejecuta `00` → `05` en orden, muestra en la consola lo que imprime cada celda y guarda cada
+  notebook **ejecutado, con salidas** en `outputs/notebooks/`. Al final arma `outputs/resultados.zip`
+  (notebooks + tablas + gráficos, sin `.pt`).
+- **GPU:** el modo completo está pensado para una GPU NVIDIA con CUDA. Sin GPU, la Etapa 2 sola puede
+  tardar un día; el script avisa y pide confirmación. Para CUDA en Windows, instalá torch desde
+  https://pytorch.org/get-started/locally/ *antes* del `requirements.txt` (el `torch` por defecto de pip en
+  Windows es solo CPU).
+- **Etapa 5:** instalá Ollama desde https://ollama.com/download. El notebook levanta el servidor y baja
+  `qwen3:4b` solo. Sin Ollama: `--sin-juez`.
+- **Si algo se corta:** `python run_all.py --modo completo --desde N` retoma desde la etapa N; las Etapas 2
+  y 4 siguen desde sus checkpoints y el juez no repite llamadas.
+- La Etapa 1 se saltea si ya existe `checkpoints/tokenizer.json` (ver el punto 3 de abajo). Si traés los
+  checkpoints de Colab, copialos a `checkpoints/` y corré `--desde 2`: la Etapa 2 los carga sin reentrenar.
+
+## En Colab
 
 Checklist para la corrida final, con todas las etapas a escala completa en una T4. Cada notebook se
 puede cortar y volver a correr: las Etapas 2 y 4 retoman o cargan lo que ya está entrenado, y el juez de la
