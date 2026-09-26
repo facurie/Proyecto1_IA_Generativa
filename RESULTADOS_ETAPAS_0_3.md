@@ -213,7 +213,7 @@ total. El 94 % de la estructura queda fuera del gráfico.
 | Etapa 2 | `head_size` 32 en los dos modelos de la ablación | que solo cambien el ancho del residual y la cantidad de capas |
 | Etapa 2 | 400k cuentos y 5.000 pasos (0,93 épocas), una sola semilla | *[completar: por qué ese recorte]* |
 | Etapa 4 | SFT sobre 100k registros de Instruct, 1.500 pasos, `lr` 1e-4; LoRA rango 8, `lr` 1e-3 | guía de tamaños de la consigna; LoRA como opcional |
-| Etapa 4 | prompts de evaluación cortados en `Story:` y no en `Story: \n\n` | medido: cortar en un espacio o salto de línea produce basura de bytes (el tokenizador parte distinto el final del prompt) |
+| Etapa 4 | prompts de evaluación cortados en `Story:`, sin el espacio y el salto de línea que lo siguen en los datos (`Story: \n`) | medido: un prompt que termina en espacio o salto de línea produce basura de bytes (el tokenizador parte distinto el final del prompt) |
 | Etapa 5 | anclas para el juez (cuento real / palabras mezcladas / instrucción ajena) | poder saber si el juez discrimina antes de creerle |
 | infraestructura | corrida final local (RTX 5070, 8 GB) en lugar de Colab | *[completar]* |
 | infraestructura | huella del tokenizer en los checkpoints | volver a correr la Etapa 1 invalidaba sin avisar los modelos ya entrenados |
