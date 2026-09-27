@@ -1,0 +1,4 @@
+tipo_corrida,palabra_a,palabra_b,expectativa,id_a,id_b,coseno_inicial,coseno_entrenado,delta,percentil_coseno_inicial,percentil_coseno_entrenado,percentil_delta
+Corrida completa,dog,cat,relacionado,643,705,0.03137543,0.5867088,0.5553334,68.55,99.99,99.99
+Corrida completa,happy,sad,relacionado,402,571,0.043468803,0.4564212,0.4129524,74.92999999999999,99.97,99.89
+Corrida completa,dog,spoon,esperado lejano,643,2080,-0.01875496,0.15745288,0.17620784,37.37,89.85,91.62
