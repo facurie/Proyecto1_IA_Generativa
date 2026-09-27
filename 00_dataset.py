@@ -16,7 +16,8 @@ r"""
 
 Son seis notebooks, uno por etapa, **todos ejecutados** en una notebook con RTX 5070 Laptop de 8 GB (semilla 1337;
 las Etapas 1 a 5 a escala completa). El informe está en markdown dentro de los mismos notebooks: cada etapa cierra
-con las respuestas a sus preguntas de la consigna, sus decisiones de diseño y sus dudas.
+con las respuestas a sus preguntas de la consigna, sus decisiones de diseño y sus dudas. Las mismas conclusiones,
+junto con el registro de decisiones y el uso de IA, están reunidas en `informe_conclusiones.pdf`.
 
 | Notebook | Qué hace | Dónde está el informe |
 |---|---|---|
@@ -150,9 +151,33 @@ en la Etapa 1, sobre 5.000 cuentos held-out y 100.000 de entrenamiento.
 
 # %% [markdown]
 r"""
-## Respuestas de la Etapa 0
+## Preguntas para el informe
 
-### ¿Por qué un vocabulario chico a propósito convierte a TinyStories en un instrumento de laboratorio?
+**¿Qué les da experimentalmente "el vocabulario de un chico de 3–4 años" que un corpus general de texto web no les da?**
+En los 1.000 cuentos que miramos encontramos unas 4.961 palabras distintas y un promedio de 183,8
+palabras por cuento. Como el vocabulario es chico y los cuentos tienen un estilo parecido, el modelo ve
+muchas veces las mismas palabras y formas de escribir. Con pocos parámetros y la misma cantidad de
+datos, eso le facilita aprender a armar cuentos que se entiendan. Nos sirve para estudiar qué puede
+aprender con datos simples y repetidos. Igual, que escriba bien estos cuentos no significa que entienda
+cualquier tema.
+
+**Si entrenaran la misma arquitectura sobre un pedazo de texto crudo de internet con la misma cantidad de tokens, ¿qué esperarían que cambie, y por qué?**
+Si usamos texto web, el modelo vería más temas, palabras poco comunes, nombres, enlaces y hasta restos
+de HTML. Entonces tendría menos ejemplos repetidos de cada forma de escribir. Además, si dejamos el
+mismo tokenizador, algunas palabras se separarían en más tokens y ocuparían más espacio del contexto.
+Esperaríamos que le cueste más escribir cuentos cortos y coherentes como los de TinyStories, aunque esto
+habría que probarlo. Para compararlos bien, usaríamos el mismo tokenizador y los mismos textos de prueba;
+no alcanza con mirar la pérdida de cada modelo en su propio corpus porque son textos diferentes.
+"""
+
+# %% [markdown]
+r"""
+## Ampliación: el mismo argumento, con los números de todas las etapas
+
+Las respuestas de arriba, apoyadas en lo que medimos en las Etapas 1 a 5, y la pregunta con la que la consigna
+abre esta etapa: por qué un vocabulario chico a propósito convierte al dataset en un instrumento de laboratorio.
+
+### Por qué un vocabulario chico a propósito es un instrumento de laboratorio
 
 **Porque achica el problema hasta que un modelo de nuestro tamaño deja de estar desbordado, y entonces lo que aprende
 —o no aprende— se puede atribuir a los datos y no a que "le faltó escala".**
@@ -169,7 +194,7 @@ Nuestros números lo muestran: con 5,85M de parámetros y 6 minutos de GPU, el m
 (pérdida 9,06 ≈ ln 8.192) a sus primeras oraciones bien formadas en unos 500 pasos (pérdida 3,3), y termina en
 perplejidad 10,1 (Etapa 2).
 
-### ¿Qué nos da experimentalmente "el vocabulario de un chico de 3–4 años" que un corpus web no?
+### Qué nos da el vocabulario chico, con números
 
 1. **Repetición.** Pocas palabras se repiten muchísimo: diez palabras son el 28,5 % del texto y, con nuestro BPE, los
    1.000 tokens más usados cubren el 90 % (Etapa 1). Casi todas las filas de la tabla de embeddings reciben miles de
@@ -186,7 +211,9 @@ perplejidad 10,1 (Etapa 2).
 5. **Experimentos baratos.** El pipeline entero corre en poco más de media hora en la GPU de una notebook. Eso es lo
    que nos dejó hacer la ablación, el SFT, LoRA y el juez, en lugar de elegir uno.
 
-**Lo que no le creemos del todo.** "El vocabulario de un chico de 3–4 años" es una intención del generador, no una
+### Lo que no le creemos del todo
+
+"El vocabulario de un chico de 3–4 años" es una intención del generador, no una
 restricción dura. El paper armó los cuentos pidiéndole a GPT-3.5/4 que combinara palabras de una lista de unas 1.500
 básicas, pero en solo 1.000 cuentos aparecen unas 5.000 formas distintas (con flexiones y nombres propios), y en
 nuestro vocabulario BPE entraron *accomplishment*, *determination* y *compassionate* (Etapa 1). El corpus trae además
@@ -194,7 +221,7 @@ impurezas de su origen sintético: el 6 % de los cuentos tiene texto mal codific
 modelo aprende como cualquier otro patrón. Y la misma regularidad que lo hace útil baja la vara: "coherente" acá quiere
 decir coherente para un cuento infantil de fórmula, y parte del éxito de un modelo chico es haber aprendido la fórmula.
 
-### Con la misma arquitectura y la misma cantidad de tokens, pero texto web crudo, ¿qué esperaríamos que cambie?
+### La predicción sobre texto web, con lo que medimos
 
 **Texto con la pinta de internet pero sin hilo: fluidez local, poca coherencia, y un modelo que gasta casi todo su
 tamaño en cubrir palabras que ve pocas veces.** No lo corrimos; es una predicción, apoyada en lo que sí medimos:
@@ -210,8 +237,9 @@ tamaño en cubrir palabras que ve pocas veces.** No lo corrimos; es una predicci
 - **Mezcla de registros.** Noticias, listas, foros, código: el modelo repartiría su capacidad en imitar formatos
   distintos. Esperaríamos algo parecido a lo que vimos en clase con el Transformer de caracteres sobre Shakespeare: la
   pinta visual del texto, sin sentido.
-- **La pérdida no se podría comparar directo.** Con otro tokenizador la pérdida por token cambia de escala; habría
-  que pasarla a bits por carácter (Etapa 1, respuesta 3).
+- **La pérdida no se podría comparar directo.** Como decimos arriba, habría que medir a los dos modelos sobre los
+  mismos textos de prueba; y si cambia el tokenizador, la pérdida por token cambia de escala y hay que pasarla a
+  bits por carácter (Etapa 1, respuesta 3).
 - **Y el laboratorio dejaría de funcionar.** Si el ancho y el profundo fallan los dos, no hay forma de saber si el
   problema es la forma del modelo o que no le alcanza el tamaño: ese es el "ruido de la escala" que TinyStories saca
   del medio. El paper lo encontró en grande: modelos de ~125M de parámetros entrenados sobre corpus generales casi
@@ -258,14 +286,13 @@ Las fechas salen del historial del repositorio y los tiempos, de los logs de las
 | 26/9 | Etapa 3 | Pares fijados antes de mirar (*dog–cat*, *happy–sad*, *dog–spoon*), 10.000 pares al azar como control y el máximo de una búsqueda como segundo piso de ruido; una sola PCA ajustada sobre los dos estados, para que los paneles compartan ejes. |
 | 26/9 | Etapa 4 | Cada ejemplo de SFT alineado al principio de su registro (no ventanas al azar), para que el modelo nunca vea un cuento sin su instrucción; `lr` 1e-4 y 1.500 pasos, según la §7; LoRA a mano, rango 8, sobre las proyecciones de atención. Medimos una trampa: un prompt que termina en espacio o salto de línea hace que el modelo escupa bytes sueltos, así que los prompts se cortan en `Story:`. |
 | 26/9 | Etapa 5 | Anclas para el juez (cuento real, palabras mezcladas, instrucción ajena), porque sin ellas no sabíamos si el juez discrimina; caché de respuestas, para que un corte no obligue a repetir llamadas. |
-| 26/9 | Infraestructura | Huella SHA-1 del tokenizer en cada checkpoint: volver a correr la Etapa 1 pisaba el tokenizer y dejaba a los modelos leyendo ids con otro significado, sin ningún error. `run_all.py` corre las seis etapas y guarda los notebooks ejecutados. |
+| 26/9 | Infraestructura | Huella SHA-1 del tokenizer en cada checkpoint: volver a correr la Etapa 1 pisaba el tokenizer y dejaba a los modelos leyendo ids con otro significado, sin ningún error. Un script corre las seis etapas en orden y guarda los notebooks ejecutados. |
 | 26/9 | Corrida completa | Primero en modo prueba y después la completa, en la notebook con RTX 5070 en lugar de Colab (ver "Dónde terminamos"). |
 | 27/9 | Informe | Un informe por etapa dentro de su notebook, repartidos entre los cuatro; revisión final contra la consigna. |
 
 ### Qué se rompió o nos sorprendió, y qué hicimos
 
-- **Un notebook perdió sus salidas** al regenerarlo desde su `.py`: lo restauramos desde la copia ejecutada, y la
-  herramienta de conversión ahora conserva las salidas de las celdas cuyo código no cambió.
+- **Un notebook perdió sus salidas** al regenerarlo desde su fuente `.py`: lo restauramos desde la copia ejecutada.
 - **El chequeo de GPU podía colgarse** (drivers de GPU híbrida, o un proceso anterior de Python trabado con la GPU
   tomada): lo pasamos a un proceso aparte, con límite de tiempo.
 - **`torch.load` se negaba a abrir un checkpoint** del SFT porque el historial guardaba escalares de numpy (desde torch
@@ -309,14 +336,14 @@ r"""
 Usamos un asistente de programación (Claude, de Anthropic), y queda a la vista en el historial del repositorio: los
 commits que escribió van firmados por él.
 
-- **Código:** escribió la mayor parte del código de las Etapas 4 y 5 y de la infraestructura (`run_all.py`, la huella
-  del tokenizer, la medición de memoria) a partir de lo que le pedimos; nosotros lo corrimos, lo revisamos y
+- **Código:** escribió la mayor parte del código de las Etapas 4 y 5 y de la infraestructura (el script que corre
+  todas las etapas en orden, la huella del tokenizer, la medición de memoria) a partir de lo que le pedimos; nosotros lo corrimos, lo revisamos y
   decidimos qué medir.
 - **Resultados y borradores:** ordenó en tablas los números medidos de cada etapa y redactó un primer borrador de los
   resultados de las Etapas 4 y 5.
 - **Revisión final (27/9):** revisó los notebooks contra la consigna, chequeó los números citados contra las salidas
-  y los CSV, corrigió afirmaciones que habían quedado desactualizadas y redactó, a partir de lo ya medido, las
-  respuestas de la Etapa 0, este registro y el cierre del proyecto.
+  y los CSV, corrigió afirmaciones que habían quedado desactualizadas y redactó, a partir de lo ya medido, la
+  ampliación de la Etapa 0 (las respuestas cortas las escribimos nosotros), este registro y el cierre del proyecto. También armó el PDF con las conclusiones.
 
 **Dónde no le creímos.** El resumen preliminar de resultados que armó el asistente comparaba el final de las curvas de
 los dos modelos de la ablación en tramos distintos, y atribuía al corpus, sin verificarlo, el `â€œ` que generó uno de

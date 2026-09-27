@@ -600,7 +600,7 @@ r"""
   caso el riesgo es mucho menor, porque el tokenizador y el modelo se entrenan con el mismo corpus, pero no es cero: la
   cola larga del vocabulario existe igual.
 
-Lo que sigue: Etapa 2 (`02_pretraining.py`) — entrenar el Transformer sobre TinyStories con este tokenizador.
+Lo que sigue: Etapa 2 (`02_pretraining.ipynb`) — entrenar el Transformer sobre TinyStories con este tokenizador.
 """
 
 # %% [markdown]

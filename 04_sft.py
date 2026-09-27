@@ -77,11 +77,10 @@ print(f"dispositivo: {DEVICE} · SMOKE_TEST: {SMOKE_TEST} · AMP: {USE_AMP} · c
 r"""
 ## El modelo de la Etapa 2
 
-Las clases son copia textual de `02_pretraining.py` (los nombres de módulos tienen que coincidir para que
+Las clases son copia textual de las del notebook `02_pretraining` (los nombres de módulos tienen que coincidir para que
 el `state_dict` cargue sin adivinar). No se importan de ahí porque importar ese archivo lo ejecutaría
 entero, entrenamiento incluido.
 """
-
 
 # %%
 @dataclass
@@ -910,7 +909,7 @@ with open(OUTPUT_DIR / "metadata.json", "w", encoding="utf-8") as f:
 r"""
 ## Resultados de la corrida completa
 
-Corrida local (RTX 5070 Laptop, 8 GB), `run_all.py --modo completo`, semilla 1337. Base: el modelo
+Corrida local (RTX 5070 Laptop, 8 GB), todas las etapas en orden, semilla 1337. Base: el modelo
 **ancho** de la Etapa 2 (`n_embd=256`, `n_layer=2`, 5,85M parámetros, 5.000 pasos, val loss 2,31 /
 ppl 10,1). Todas las cifras de abajo salen de `checkpoints/stage4/`. Hay **una sola semilla por
 configuración**: los intervalos de confianza reflejan la variación entre prompts, no entre corridas.

@@ -789,7 +789,7 @@ with open(OUTPUT_DIR / "metadata.json", "w", encoding="utf-8") as f:
 r"""
 ## Resultados de la corrida completa
 
-Corrida local (RTX 5070 Laptop, 8 GB), `run_all.py --modo completo`, semilla 1337, juez **qwen3:4b** con
+Corrida local (RTX 5070 Laptop, 8 GB), todas las etapas en orden, semilla 1337, juez **qwen3:4b** con
 `think=False` y `format="json"`. **264 evaluaciones**: 4 modelos × 48 textos (6 prompts de cuento y 6 de
 instrucción × 4 muestras) más 72 anclas — cuentos reales, esos mismos cuentos con las palabras mezcladas, y
 cuentos reales evaluados contra una instrucción que no les corresponde. Las cifras salen de

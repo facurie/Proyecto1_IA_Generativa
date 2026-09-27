@@ -777,9 +777,10 @@ r"""
   con más?
 - Contra Chinchilla, ¿dónde quedaron parados y qué creen que les costó?
 
-Lo que sigue: Etapa 3 (`03_embeddings.py`) — la tabla de embeddings de `pretrain_wide.pt` contra la de
+Lo que sigue: Etapa 3 (`03_embeddings.ipynb`) — la tabla de embeddings de `pretrain_wide.pt` contra la de
 `pretrain_step0.pt`.
 """
+
 # %% [markdown]
 r"""
 ## Informe y conclusiones de la Etapa 2

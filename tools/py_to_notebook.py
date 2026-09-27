@@ -90,8 +90,7 @@ REPO_DIR = "Proyecto1_IA_Generativa"
 # donde el estudiante ya tiene el repositorio clonado y las dependencias instaladas.
 BOOTSTRAP_CELL = f'''# --- arranque en Colab (no hace nada fuera de Colab) -----------------------
 # Colab arranca en /content con un entorno vacío: sin esta celda el
-# `import environment` siguiente falla con ModuleNotFoundError. Generada por
-# tools/py_to_notebook.py -- editala ahí, no acá.
+# `import environment` siguiente falla con ModuleNotFoundError.
 import os
 import subprocess
 import sys
