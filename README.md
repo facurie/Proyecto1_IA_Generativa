@@ -3,6 +3,8 @@
 **IA Generativa Avanzada y Sistemas Multi-Agente** — Licenciatura en Tecnología Digital, Universidad Torcuato Di
 Tella. Entrega del domingo 27 de septiembre de 2026.
 
+**Grupo:** Facundo Guledjian · Galo Resnik · Lucas Allara · Facundo Riedel
+
 El ciclo de vida de un LLM a escala mínima — tokenizador → preentrenamiento → representación aprendida → SFT →
 evaluación con un juez — sobre [TinyStories](https://arxiv.org/abs/2305.07759).
 
