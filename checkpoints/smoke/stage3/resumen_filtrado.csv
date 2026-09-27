@@ -1,0 +1,21 @@
+tipo_corrida,estado,consulta,candidatos,n_vecinos,proporcion_palabras_enteras
+SMOKE · validación técnica,inicial,dog,palabras enteras,10,1.0
+SMOKE · validación técnica,inicial,cat,palabras enteras,10,1.0
+SMOKE · validación técnica,inicial,happy,palabras enteras,10,1.0
+SMOKE · validación técnica,inicial,sad,palabras enteras,10,1.0
+SMOKE · validación técnica,inicial,spoon,palabras enteras,10,1.0
+SMOKE · validación técnica,entrenado,dog,palabras enteras,10,1.0
+SMOKE · validación técnica,entrenado,cat,palabras enteras,10,1.0
+SMOKE · validación técnica,entrenado,happy,palabras enteras,10,1.0
+SMOKE · validación técnica,entrenado,sad,palabras enteras,10,1.0
+SMOKE · validación técnica,entrenado,spoon,palabras enteras,10,1.0
+SMOKE · validación técnica,inicial,dog,todo el vocabulario,10,0.7
+SMOKE · validación técnica,inicial,cat,todo el vocabulario,10,0.6
+SMOKE · validación técnica,inicial,happy,todo el vocabulario,10,0.9
+SMOKE · validación técnica,inicial,sad,todo el vocabulario,10,0.8
+SMOKE · validación técnica,inicial,spoon,todo el vocabulario,10,0.9
+SMOKE · validación técnica,entrenado,dog,todo el vocabulario,10,0.8
+SMOKE · validación técnica,entrenado,cat,todo el vocabulario,10,0.7
+SMOKE · validación técnica,entrenado,happy,todo el vocabulario,10,0.9
+SMOKE · validación técnica,entrenado,sad,todo el vocabulario,10,1.0
+SMOKE · validación técnica,entrenado,spoon,todo el vocabulario,10,0.9

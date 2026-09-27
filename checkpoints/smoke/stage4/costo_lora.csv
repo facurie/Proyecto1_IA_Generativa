@@ -1,0 +1,7 @@
+,completo,lora
+entrenables,5846528.0,118784.0
+total,5846528.0,5965312.0
+fracción entrenable,1.0,0.01991245386662089
+"grad + AdamW (MB, analítico)",70.158336,1.425408
+memoria pico GPU al entrenar (MB),428.626432,316.156928
+segundos por paso,0.012990447699988862,0.015324267630003306

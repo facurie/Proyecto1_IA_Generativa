@@ -1,0 +1,53 @@
+{
+  "smoke_test": false,
+  "juez": "qwen3:4b",
+  "modelos": {
+    "base (ancho)": "/home/lucas/Proyecto1_IA_Generativa/checkpoints/pretrain_wide.pt",
+    "profundo": "/home/lucas/Proyecto1_IA_Generativa/checkpoints/pretrain_deep.pt",
+    "SFT completo": "/home/lucas/Proyecto1_IA_Generativa/checkpoints/sft_final.pt",
+    "SFT LoRA": "/home/lucas/Proyecto1_IA_Generativa/checkpoints/sft_lora.pt"
+  },
+  "referencia_nll": "base (ancho)",
+  "n_samples": 4,
+  "story_prompts": [
+    "Once upon a time",
+    "One day, a little girl named Lily",
+    "Tom and his dog went to the park.",
+    "There was a big red ball in the garden.",
+    "Sam was sad because",
+    "The little bird wanted to fly high."
+  ],
+  "word_prompts": [
+    [
+      "dragon",
+      "happy",
+      "forest"
+    ],
+    [
+      "ball",
+      "sad",
+      "garden"
+    ],
+    [
+      "cat",
+      "brave",
+      "river"
+    ],
+    [
+      "cake",
+      "angry",
+      "school"
+    ],
+    [
+      "bird",
+      "scared",
+      "tree"
+    ],
+    [
+      "boat",
+      "kind",
+      "sea"
+    ]
+  ],
+  "max_new_tokens": 200
+}

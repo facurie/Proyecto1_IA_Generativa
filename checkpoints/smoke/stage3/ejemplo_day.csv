@@ -1,0 +1,3 @@
+tipo_corrida,token,token_id,presente,pasa_filtro,coseno_entre_filas_inicial,coseno_entre_filas_entrenado
+SMOKE · validación técnica,Ġday,356,True,True,-0.13644498586654663,-0.14164653420448303
+SMOKE · validación técnica,day,1112,True,False,-0.13644498586654663,-0.14164653420448303

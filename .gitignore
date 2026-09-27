@@ -14,17 +14,9 @@ __pycache__/
 # bundle de certificados del proxy corporativo, generado localmente, específico de cada máquina
 .certs/
 
-# checkpoints de modelos y artefactos de ejecución de los notebooks generados (grandes, no son fuente)
-checkpoints/
-*.pt
-*.ckpt
-
 CLAUDE.md
 verification_report.md
 
 # notebook unificado de smoke test de punta a punta (tools/build_unified_notebook.py).
 # Contiene la solución de referencia completa -- nunca tiene que llegarles a los alumnos.
 _unified.ipynb
-
-# salidas del trabajo de estudiantes (si este repositorio se usa alguna vez para correr la consigna localmente)
-outputs/
