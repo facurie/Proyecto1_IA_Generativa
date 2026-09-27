@@ -98,10 +98,21 @@ print(f"las 10 más comunes       : {word_counts.most_common(10)}")
 
 # %% [markdown]
 r"""
-## Para tu informe
+## Preguntas para el informe
 
-Argumentá, con los números de arriba, por qué un vocabulario acotado aísla la variable "datos" del
-ruido de la escala. ¿Qué esperarías que cambie si entrenaras la misma arquitectura sobre una porción de
-texto web general con la misma *cantidad de tokens* que esta muestra? Lo que sigue: Etapa 1 (`01_tokenizer.py`) --
-entrenar un tokenizador BPE sobre este corpus.
+**¿Qué les da experimentalmente "el vocabulario de un chico de 3–4 años" que un corpus general de texto web no les da?**
+En los 1.000 cuentos que miramos encontramos unas 4.961 palabras distintas y un promedio de 183,8
+palabras por cuento. Como el vocabulario es chico y los cuentos tienen un estilo parecido, el modelo ve
+muchas veces las mismas palabras y formas de escribir. Con pocos parámetros y la misma cantidad de
+datos, eso le facilita aprender a armar cuentos que se entiendan. Nos sirve para estudiar qué puede
+aprender con datos simples y repetidos. Igual, que escriba bien estos cuentos no significa que entienda
+cualquier tema.
+
+**Si entrenaran la misma arquitectura sobre un pedazo de texto crudo de internet con la misma cantidad de tokens, ¿qué esperarían que cambie, y por qué?**
+Si usamos texto web, el modelo vería más temas, palabras poco comunes, nombres, enlaces y hasta restos
+de HTML. Entonces tendría menos ejemplos repetidos de cada forma de escribir. Además, si dejamos el
+mismo tokenizador, algunas palabras se separarían en más tokens y ocuparían más espacio del contexto.
+Esperaríamos que le cueste más escribir cuentos cortos y coherentes como los de TinyStories, aunque esto
+habría que probarlo. Para compararlos bien, usaríamos el mismo tokenizador y los mismos textos de prueba;
+no alcanza con mirar la pérdida de cada modelo en su propio corpus porque son textos diferentes.
 """
