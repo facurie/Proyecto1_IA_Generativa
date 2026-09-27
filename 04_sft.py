@@ -908,38 +908,6 @@ with open(OUTPUT_DIR / "metadata.json", "w", encoding="utf-8") as f:
 
 # %% [markdown]
 r"""
-## Para el informe
-
-Completar después de **la corrida completa**; lo que sale con `SMOKE_TEST` solo prueba que el código corre.
-
-1. **El par antes/después con el mismo prompt: ¿qué cambió, la forma o el contenido?** Copien las tres
-   salidas de `Words: dragon, happy, forest` (las dos plantillas). Léanlas antes de mirar la tabla, y
-   después contrasten con `forma_contenido.csv`:
-   - *Forma*: ¿el base, en `solo Words`, escribe `Story:` y un cuento, o sigue con más encabezados o con
-     texto que no es un cuento? ¿El de SFT sí? ¿Terminan con `<|endoftext|>`?
-   - *Contenido*: ¿el uso de palabras del SFT le gana a su propio piso de azar (`contenido_bootstrap.csv`)?
-     ¿Y el base? Ojo: el base puede "usar" alguna palabra solo porque `forest` o `happy` son frecuentes en
-     TinyStories; por eso se compara contra el piso y no contra cero.
-   - Si se movió uno solo de los dos ejes, díganlo así, con el número. Miren el panel derecho de las
-     curvas: ¿cuál de los dos se movió primero?
-2. **¿Qué harían para conseguir la parte que no se movió?** Opciones concretas: más pasos o más registros
-   (el contenido suele necesitar más que la forma: el formato se repite en *cada* ejemplo, cada palabra
-   pedida aparece en pocos); enmascarar la pérdida de la instrucción para que todo el gradiente vaya al
-   cuento; filtrar a registros con `Words:` para concentrar la señal; un modelo más profundo (la Etapa 2
-   sugiere que el contexto largo es cosa de profundidad, y usar una palabra pedida 100 tokens antes es
-   justamente contexto).
-3. **LoRA: ¿qué fracción de los parámetros entrenaron, y cuánto de la mejora compró?** Usen
-   `costo_lora.csv` (fracción entrenable, memoria pico al entrenar, segundos por paso) y la columna `LoRA / completo`
-   de `comparacion_lora.csv`. Tengan en cuenta qué *no* toca LoRA acá: embeddings, MLP y `lm_head` quedan
-   congelados, así que todo lo que aprenda tiene que pasar por *cómo se mira el contexto*. ¿Les alcanza
-   eso para la forma? ¿Y para el contenido? ¿Y la memoria: el ahorro en gradientes + AdamW se nota en el
-   pico, o a esta escala dominan las activaciones?
-4. **Olvido.** ¿Cuánto subió la pérdida en TinyStories liso con cada método? LoRA, al no tocar los pesos
-   base, ¿olvidó menos?
-"""
-
-# %% [markdown]
-r"""
 ## Resultados de la corrida completa
 
 Corrida local (RTX 5070 Laptop, 8 GB), `run_all.py --modo completo`, semilla 1337. Base: el modelo

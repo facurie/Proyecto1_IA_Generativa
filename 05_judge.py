@@ -787,31 +787,6 @@ with open(OUTPUT_DIR / "metadata.json", "w", encoding="utf-8") as f:
 
 # %% [markdown]
 r"""
-## Para el informe
-
-Completar después de **la corrida completa**. Con el juez falso del `SMOKE_TEST` las notas son ruido.
-
-1. **¿El juez es confiable?** Antes que nada, las anclas (`notas_por_modelo.csv`): ¿cuento real > palabras
-   mezcladas en gramática y consistencia, con IC que no se pisan? ¿La instrucción ajena saca obediencia
-   baja? Y `formato_juez.csv`: ¿cuántas respuestas vinieron rotas o con texto extra, aun con
-   `format="json"`?
-2. **¿Dónde le da la razón el juez a la perplejidad?** Comparen el orden de los modelos en
-   `juez_vs_perplejidad.csv` y el signo de las correlaciones en `correlacion_nll_juez.csv`. Lo esperable:
-   gramática y consistencia siguen a la perplejidad (texto más probable bajo un modelo de cuentos suele
-   ser más gramatical); creatividad no tiene por qué.
-3. **¿Dónde se le va para otro lado, y qué dice eso de la perplejidad?** Casos típicos a buscar:
-   - el SFT empeora la perplejidad en texto liso pero el juez le pone igual o mejor nota (la perplejidad
-     penaliza el cambio de formato, no la calidad del cuento);
-   - un texto repetitivo tiene NLL bajísima (cada repetición es predecible) y el juez lo castiga en
-     creatividad: la perplejidad premia lo predecible;
-   - ancho vs. profundo: ¿el juez separa lo que la perplejidad casi no separa, o al revés? Crucen con los
-     prompts de recuerdo y consistencia de la Etapa 2.
-4. **Obediencia:** ¿el SFT sube la obediencia sobre el base en los mismos prompts? ¿Coincide con el uso de
-   palabras de la Etapa 4? Si el juez y la regex discrepan, ¿quién tiene razón en los casos leídos?
-"""
-
-# %% [markdown]
-r"""
 ## Resultados de la corrida completa
 
 Corrida local (RTX 5070 Laptop, 8 GB), `run_all.py --modo completo`, semilla 1337, juez **qwen3:4b** con
