@@ -809,3 +809,102 @@ Completar después de **la corrida completa**. Con el juez falso del `SMOKE_TEST
 4. **Obediencia:** ¿el SFT sube la obediencia sobre el base en los mismos prompts? ¿Coincide con el uso de
    palabras de la Etapa 4? Si el juez y la regex discrepan, ¿quién tiene razón en los casos leídos?
 """
+
+# %% [markdown]
+r"""
+## Resultados de la corrida completa
+
+Corrida local (RTX 5070 Laptop, 8 GB), `run_all.py --modo completo`, semilla 1337, juez **qwen3:4b** con
+`think=False` y `format="json"`. **264 evaluaciones**: 4 modelos × 48 textos (6 prompts de cuento y 6 de
+instrucción × 4 muestras) más 72 anclas — cuentos reales, esos mismos cuentos con las palabras mezcladas, y
+cuentos reales evaluados contra una instrucción que no les corresponde. Las cifras salen de
+`checkpoints/stage5/`.
+
+### 1. ¿Es confiable el juez? Sí para gramática y coherencia, no para obediencia
+
+- **Formato: 264 de 264 respuestas válidas** (`formato_juez.csv`), ninguna con texto extra ni con dos
+  objetos. Con `format="json"`, la trampa de "el juez contesta dos veces" no apareció en esta corrida; el
+  parser robusto quedó como seguro, sin llegar a usarse.
+- **Separa bien las anclas** (`notas_por_modelo.csv`):
+
+  | ancla | gramática | creatividad | consistencia |
+  |---|---|---|---|
+  | cuento real | 8,3 [8,0, 8,5] | 6,8 [6,5, 7,1] | 8,8 [8,6, 9,0] |
+  | palabras mezcladas | 1,5 [1,3, 1,8] | 2,5 [2,2, 2,7] | 1,5 [1,3, 1,8] |
+
+  Mismo vocabulario y misma temática, con la gramática destruida: la nota cae de 8,3 a 1,5 y los intervalos
+  no se pisan. El juez lee gramática y coherencia, no solo el tema.
+- **La obediencia no es confiable.** Los cuentos reales evaluados contra una instrucción ajena (12,5 % de
+  uso de las palabras pedidas) sacaron obediencia 5,75 [4,9, 6,6]. Los del SFT completo sacaron 4,0 tanto
+  con 0 como con 3 de 3 palabras usadas. La correlación entre la obediencia del juez y el uso real de
+  palabras es de apenas 0,23 (Spearman): la obediencia está contaminada por la calidad general del texto
+  (efecto halo). Para obediencia, la cuenta automática de la Etapa 4 es el mejor instrumento.
+
+Notas por modelo (prompts de cuento; en obediencia y uso de palabras, prompts de instrucción):
+
+| | val ppl (liso) | gramática | creatividad | consistencia | obediencia | uso de palabras |
+|---|---|---|---|---|---|---|
+| base (ancho) | **10,3** | 1,96 | 3,08 | 2,17 [2,0, 2,4] | 2,8 [2,3, 3,3] | 18 % |
+| profundo | 10,6 | 1,92 | 2,92 | 1,96 [1,9, 2,0] | 2,5 [2,0, 3,0] | 21 % |
+| SFT completo | 13,1 | 2,00 | 2,96 | 1,88 | **4,1 [3,9, 4,4]** | **56 %** |
+| SFT LoRA | 12,7 | 1,96 | 2,92 | 1,83 | 3,7 [3,2, 4,0] | 33 % |
+
+**Hay un efecto piso.** De las 192 generaciones de nuestros modelos, el juez puso gramática 2 en 173 y 1 en
+19, nunca más. Contra la escala de un cuento real (8,3), los cuatro modelos están en el mismo escalón: el
+juez no puede ordenarlos en gramática. Las diferencias en consistencia son de décimas y, salvo base contra
+el resto, los intervalos se pisan.
+
+### 2. Dónde le da la razón el juez a la perplejidad
+
+- **Texto por texto, dentro de nuestros modelos:** cuanto menor la NLL de un texto (medida con el modelo
+  ancho), mejor la nota. Spearman (`correlacion_nll_juez.csv`): gramática −0,35, creatividad −0,37,
+  consistencia −0,44; con las anclas incluidas, −0,49, −0,49 y −0,52. El signo es el esperado en las tres,
+  incluso en creatividad.
+- **Base contra profundo:** la perplejidad prefiere al ancho (10,3 contra 10,6) y el juez también, por poco
+  (consistencia 2,17 contra 1,96).
+- **Contra la Etapa 2:** esa preferencia coincide con la probabilidad media de la respuesta correcta en los
+  prompts de recuerdo (0,12 contra 0,10). No coincide con el reuso de palabras clave, que favorecía al
+  profundo (0,58 contra 0,52). Ninguna de las tres lecturas reproduce "profundidad ↔ contexto" del paper a
+  esta escala.
+
+### 3. Dónde se le va para otro lado, y qué dice eso de la perplejidad
+
+1. **El SFT tiene la peor perplejidad y el juez no lo castiga.**
+   - En texto liso, el SFT completo sube de 10,3 a 13,1 de perplejidad: es el peor de los cuatro.
+   - El juez no lo ve peor: gramática igual (2,0) y la obediencia más alta (4,1 contra 2,8).
+   - La perplejidad sobre TinyStories mide cuánto se parece el modelo a esa distribución. El SFT se corrió
+     hacia otro formato, y eso se paga en perplejidad aunque los cuentos no empeoren.
+   - En su propia distribución (Instruct), el SFT baja de 3,20 a 2,12. La perplejidad depende de sobre qué
+     texto se mide; la calidad no.
+2. **Un cuento real puntúa casi igual que el balbuceo del propio modelo.**
+   - Con el modelo ancho como vara, los cuentos reales tienen una NLL de 2,39 por token, y las generaciones
+     del propio ancho, 2,29: al modelo le parecen más probables sus propias muestras que los cuentos
+     humanos.
+   - El juez las separa por más de 6 puntos (gramática 8,3 contra 1,96).
+   - La perplejidad bajo un modelo mide cuánto se parece un texto a lo que ese modelo produciría, no si es
+     bueno. Por eso el propio modelo se autoevalúa bien.
+   - Solo el caso extremo de las palabras mezcladas (NLL 8,8) lo separan las dos varas por igual.
+
+**En una línea:** la perplejidad sirve para detectar texto roto y para comparar modelos sobre la misma
+distribución; no sirve para decidir si un texto es un buen cuento, y penaliza cualquier cambio de formato
+como si fuera pérdida de calidad. El juez sirve justo para eso, con dos límites medidos: satura contra un
+piso cuando todos los modelos son malos, y su obediencia se deja llevar por la calidad general del texto.
+
+### 4. Obediencia: el SFT sube, y acá la regex le gana al juez
+
+- El SFT completo sube la obediencia del juez de 2,8 a 4,1 [3,9, 4,4] sobre los mismos prompts, y el uso de
+  palabras de 18 % a 56 %; LoRA queda en el medio (3,7 y 33 %). En la dirección grande, las dos medidas
+  coinciden.
+- Texto por texto dejan de coincidir: Spearman 0,23. Los tres casos de mayor discrepancia son anclas de
+  instrucción ajena — cuentos reales, bien escritos, con 0 de las palabras pedidas — a los que el juez puso
+  obediencia 9, 7 y 7. Ahí la razón es la regex, no el juez: cuenta lo que dice contar, mientras que el
+  juez mezcla obediencia con calidad.
+- Por eso la conclusión de la Etapa 4 se apoya en `uso − piso` y no en la nota del juez.
+
+### Limitaciones
+
+- 24 textos por modelo y tipo, y una sola semilla de entrenamiento por configuración. Alcanza para las
+  diferencias grandes (anclas, obediencia del SFT), no para las de décimas.
+- El juez tiene 4B parámetros. Con un juez más grande, el efecto piso probablemente se abriría en más
+  escalones.
+"""
