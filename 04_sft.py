@@ -908,32 +908,124 @@ with open(OUTPUT_DIR / "metadata.json", "w", encoding="utf-8") as f:
 
 # %% [markdown]
 r"""
-## Para el informe
+## Resultados de la corrida completa
 
-Completar después de **la corrida completa**; lo que sale con `SMOKE_TEST` solo prueba que el código corre.
+Corrida local (RTX 5070 Laptop, 8 GB), `run_all.py --modo completo`, semilla 1337. Base: el modelo
+**ancho** de la Etapa 2 (`n_embd=256`, `n_layer=2`, 5,85M parámetros, 5.000 pasos, val loss 2,31 /
+ppl 10,1). Todas las cifras de abajo salen de `checkpoints/stage4/`. Hay **una sola semilla por
+configuración**: los intervalos de confianza reflejan la variación entre prompts, no entre corridas.
 
-1. **El par antes/después con el mismo prompt: ¿qué cambió, la forma o el contenido?** Copien las tres
-   salidas de `Words: dragon, happy, forest` (las dos plantillas). Léanlas antes de mirar la tabla, y
-   después contrasten con `forma_contenido.csv`:
-   - *Forma*: ¿el base, en `solo Words`, escribe `Story:` y un cuento, o sigue con más encabezados o con
-     texto que no es un cuento? ¿El de SFT sí? ¿Terminan con `<|endoftext|>`?
-   - *Contenido*: ¿el uso de palabras del SFT le gana a su propio piso de azar (`contenido_bootstrap.csv`)?
-     ¿Y el base? Ojo: el base puede "usar" alguna palabra solo porque `forest` o `happy` son frecuentes en
-     TinyStories; por eso se compara contra el piso y no contra cero.
-   - Si se movió uno solo de los dos ejes, díganlo así, con el número. Miren el panel derecho de las
-     curvas: ¿cuál de los dos se movió primero?
-2. **¿Qué harían para conseguir la parte que no se movió?** Opciones concretas: más pasos o más registros
-   (el contenido suele necesitar más que la forma: el formato se repite en *cada* ejemplo, cada palabra
-   pedida aparece en pocos); enmascarar la pérdida de la instrucción para que todo el gradiente vaya al
-   cuento; filtrar a registros con `Words:` para concentrar la señal; un modelo más profundo (la Etapa 2
-   sugiere que el contexto largo es cosa de profundidad, y usar una palabra pedida 100 tokens antes es
-   justamente contexto).
-3. **LoRA: ¿qué fracción de los parámetros entrenaron, y cuánto de la mejora compró?** Usen
-   `costo_lora.csv` (fracción entrenable, memoria pico al entrenar, segundos por paso) y la columna `LoRA / completo`
-   de `comparacion_lora.csv`. Tengan en cuenta qué *no* toca LoRA acá: embeddings, MLP y `lm_head` quedan
-   congelados, así que todo lo que aprenda tiene que pasar por *cómo se mira el contexto*. ¿Les alcanza
-   eso para la forma? ¿Y para el contenido? ¿Y la memoria: el ahorro en gradientes + AdamW se nota en el
-   pico, o a esta escala dominan las activaciones?
-4. **Olvido.** ¿Cuánto subió la pérdida en TinyStories liso con cada método? LoRA, al no tocar los pesos
-   base, ¿olvidó menos?
+Qué se entrenó:
+
+- **SFT completo:** 1.500 pasos, batch 64, `lr` 1e-4 → 1e-5, sobre 100.000 registros de
+  TinyStories-Instruct, cada bloque alineado al principio (instrucción + `Story:` + cuento). Tardó 1,7 min.
+- **SFT LoRA:** mismo presupuesto, `lr` 1e-3, rango 8 y α=16 sobre `Head.key/query/value` y
+  `MultiHeadAttention.proj`. El resto del modelo quedó congelado.
+- **Medición:** 8 prompts de 3 palabras × 5 muestras, en las dos plantillas (`Words + Story`, que mide
+  sobre todo contenido, y `solo Words`, que mide sobre todo forma).
+
+### 1. El par antes/después: cambiaron las dos cosas, pero no por igual
+
+`Words: dragon, happy, forest`, misma semilla para los tres modelos. Fragmentos textuales.
+
+**Plantilla `solo Words`** (el prompt termina en `forest`):
+
+> **Base:** `, and it would be so loud that day he was always bigger than the other animals were talking. One day Sam's parents said to him, "Let's go and see where the other person can find my secret from here!" …`
+
+> **SFT completo:** `, good` / `Summary: Tim learns to share a bigger map by making his friend happy ending.` / `Story: Once upon a time, in a big forest, there was a green forest. On one last, he met a small rabbit. The rabbit felt happy and grateful. …`
+
+> **SFT LoRA:** `, good` / `Summary: Tim observes a game where he needed food for the dragon …` / `Summary: …` / `Dort: Timmy remembers …` (no llega a escribir `Story:`)
+
+**Plantilla `Words + Story`:**
+
+> **Base:** `"Mr Jones! Are you so big? What's wrong?" Mama: "I'll bring to the dragon inside the candle". Slowly, the dragon kept walking away …` — usa 1 de 3 palabras.
+
+> **SFT completo:** `Once upon a time, there was a little bear named Benny. Benny loved to hop around the forest near his home. … Benny was happy …` — usa 2 de 3.
+
+> **SFT LoRA:** `Lily loved to hide with her friend, Timmy. …` — usa 1 de 3 (`happy`).
+
+La medición completa (`forma_contenido.csv`, `contenido_bootstrap.csv`):
+
+| | arranca cuento (`solo Words`) | termina (`W+S`) | uso de palabras (`W+S`) | piso de azar | uso − piso [IC95] |
+|---|---|---|---|---|---|
+| base | **0 %** | 92,5 % | 19 % | 8 % | 0,11 [0,00, 0,19] |
+| SFT completo | **92,5 %** | 92,5 % | **52,5 %** | 21 % | **0,32 [0,14, 0,46]** |
+| SFT LoRA | 37,5 % | 85 % | 36 % | 11 % | 0,25 [0,17, 0,33] |
+
+- **La forma cambió de golpe y por completo.** Con solo la línea `Words:`, el base nunca escribió un
+  cuento: sigue la frase como si `forest` fuera parte de una oración (`, and it would be so loud…`). El
+  SFT completo, en el 92,5 % de los casos, trata esa línea como lo que es, un encabezado: primero completa
+  la lista (`, good`), después agrega otro encabezado (`Summary:`), escribe `Story:` y arranca el cuento.
+  Eso no es conocimiento nuevo sobre dragones o bosques: es haber aprendido la estructura del formato.
+- **En `Words + Story` la forma ya estaba antes.** El base arranca un cuento el 92,5 % de las veces cuando
+  el prompt termina en `Story:`, porque el preentrenamiento ya le enseñó a escribir cuentos. Lo que el SFT
+  agrega en esa plantilla es contenido, no forma.
+- **El contenido se movió, pero a medias.** El uso de las palabras pedidas pasó de 19 % a 52,5 %. La
+  ganancia sobre el piso de azar (0,32) casi triplica la del base (0,11), y el intervalo del base toca el
+  cero: el base solo "usa" palabras frecuentes en TinyStories (`happy`, `forest`) por casualidad. Aun así,
+  el SFT completo usa en promedio la mitad de las palabras, no las tres.
+- **La forma se movió primero.** En el panel derecho de las curvas, "arranca cuento" ya estaba en 75 % en
+  el paso 300 (de 1.500) y en 100 % desde el 900, subiendo de manera monótona; el uso de palabras osciló
+  entre 0,33 y 0,75 sin tendencia limpia.
+- **Efecto secundario.** El SFT a veces mete líneas de encabezado dentro del cuento: 0,6 por generación en
+  el completo (0,25 en LoRA), 0 en el base. Aprendió tan bien el formato que a veces lo sobreaplica.
+
+**En una línea:** el SFT movió primero y del todo la forma — reconoce la instrucción y la convierte en un
+cuento. El contenido se movió menos: usa más de las palabras pedidas que el azar, pero no todas.
+
+### 2. Qué falta para conseguir la parte que no se movió
+
+1. **Enmascarar la pérdida de la instrucción**, para que todo el gradiente vaya al cuento condicionado.
+   Hoy el modelo también aprende a generar encabezados, y eso explica el `, good` y los `Summary:`
+   espontáneos.
+2. **Filtrar a registros con `Words:`.** Solo una parte de Instruct tiene esa línea, así que la señal de
+   "usá estas palabras" es más rala que la de formato, que está en todos los registros.
+3. **Más pasos:** el uso de palabras no había convergido.
+4. **Un modelo más profundo.** Usar una palabra 50-100 tokens después de leerla es un problema de
+   contexto, y con 2 capas hay poco margen.
+
+### 3. LoRA: qué fracción se entrenó y cuánto de la mejora compró
+
+`costo_lora.csv`:
+
+| | completo | LoRA |
+|---|---|---|
+| parámetros entrenables | 5.846.528 (100 %) | **118.784 (1,99 %)** |
+| gradientes + AdamW (analítico) | 70,2 MB | 1,4 MB |
+| memoria pico GPU al entrenar | 3.065 MB | 2.922 MB (**−4,6 %**) |
+| segundos por paso | 0,067 | 0,062 (−7 %) |
+
+`comparacion_lora.csv`, con la mejora medida como `(LoRA − base) / (completo − base)`:
+
+| métrica | base | completo | LoRA | LoRA / completo |
+|---|---|---|---|---|
+| pérdida en Instruct (val) | 3,20 | 2,12 | 2,35 | **78 %** |
+| contenido: uso − piso | 0,11 | 0,32 | 0,25 | **68 %** |
+| forma: arranca cuento (`solo Words`) | 0 % | 92,5 % | 37,5 % | **41 %** |
+
+- **Con el 2 % de los parámetros, LoRA compró el 78 % de la mejora en pérdida** y el 68 % de la de
+  contenido. En comportamiento visible compró mucho menos: el 41 % de la forma.
+- **La forma es lo que más le cuesta a LoRA, y tiene sentido.** Para escribir `Story:` en el momento justo
+  hay que cambiar qué token es probable en un punto dado, y eso vive en el MLP y en `lm_head`, que LoRA
+  dejó congelados; LoRA solo puede cambiar cómo se mira el contexto. En el par de arriba se ve: LoRA
+  aprendió a producir encabezados (`Summary:`), pero se queda dando vueltas en ellos sin llegar a `Story:`.
+  Variantes para probar: aplicar LoRA también al MLP, o descongelar `lm_head`.
+- **La memoria casi no bajó (−4,6 %).** Los gradientes y el estado de AdamW del modelo completo ocupan
+  70 MB, y el pico pasa los 3 GB. A esta escala dominan las activaciones, sobre todo los logits:
+  64 × 256 × 8.192 posiciones por batch, en fp16 más su copia en fp32 para la pérdida. LoRA reduce
+  exactamente la parte que acá no pesa; su ventaja de memoria aparece en modelos donde los pesos y el
+  optimizador dominan el pico, no en uno de 6M de parámetros.
+
+### 4. Olvido
+
+La pérdida en TinyStories liso subió de 2,29 a 2,47 con el SFT completo y a 2,52 con LoRA. En la Etapa 5,
+con otros batches, dio 2,33 → 2,57 y 2,54. El olvido existe y es moderado, pero **el orden entre completo
+y LoRA se invierte según la medición**, así que la diferencia entre los dos métodos está dentro del ruido:
+con este presupuesto no se puede afirmar que LoRA olvide menos, aunque no toque los pesos base.
+
+### Limitaciones
+
+- Una sola semilla de entrenamiento por configuración: no hay variabilidad entre corridas.
+- 40 generaciones por celda de la tabla. Alcanza para las diferencias grandes (forma), no para las de
+  décimas.
 """
