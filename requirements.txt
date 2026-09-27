@@ -27,7 +27,7 @@ tokenizers>=0.20
 # TinyStories / TinyStories-Instruct, traídos del Hub.
 datasets>=2.20
 
-# usada directamente por verify_setup.py para un chequeo liviano de metadatos del Hub.
+# la usa `datasets` para bajar TinyStories del Hub.
 huggingface_hub>=0.25
 
 # El tokenizador real de GPT-2, para la comparación de conteo de tokens de la Etapa 1.
@@ -44,13 +44,12 @@ matplotlib           # curvas de pérdida, scatter plots de embeddings
 # =============================================================================
 # Cliente nativo de Ollama (no el compatible con OpenAI) -- habla con el servidor
 # local de Ollama levantado dentro de la VM de Colab.
-ollama>=0.4
+ollama>=0.5          # `think=False` (Etapa 5) necesita el cliente >= 0.5
 requests             # sondear localhost:11434 mientras el servidor de Ollama arranca
 
 # =============================================================================
 # utilidades
 # =============================================================================
 psutil       # RAM del proceso, usada por environment.py cuando no hay GPU para consultar
-ipykernel    # permite que VS Code / Jupyter ejecuten los archivos .ipynb generados
-nbclient     # run_all.py: ejecuta los notebooks en orden y guarda las salidas
+ipykernel    # permite que VS Code / Jupyter ejecuten los notebooks localmente
 ipywidgets   # barras de progreso de tqdm limpias dentro de los notebooks
