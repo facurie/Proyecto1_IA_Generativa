@@ -23,7 +23,7 @@ No hay nada que instalar, pero el orden importa:
 
 1. **Elegí primero el entorno de ejecución** — *Entorno de ejecución → Cambiar tipo de entorno de ejecución → GPU T4*. Cambiar el tipo de entorno
    reemplaza la VM y borra `/content`, así que hacerlo después tira a la basura todo lo que hizo el paso 2.
-2. **Ejecutá la primera celda.** Clona este repositorio, hace `cd` a él e instala `requirements.txt`.
+2. **Ejecutá la primera celda.** Clona el repositorio del grupo, hace `cd` a él e instala `requirements.txt`.
    Todos los imports posteriores resuelven; nada funciona antes de eso.
 
 Si en algún momento ves `ModuleNotFoundError: No module named 'environment'`, el entorno de ejecución se recicló —
@@ -36,8 +36,8 @@ volvé a ejecutar la primera celda.
 ### Localmente (para correr `SMOKE_TEST` en CPU)
 
 ```bash
-git clone https://github.com/solidgoldmagickarp/proyecto_de_lenguaje_emergente.git
-cd proyecto_de_lenguaje_emergente
+git clone https://github.com/facurie/Proyecto1_IA_Generativa.git
+cd Proyecto1_IA_Generativa
 
 python -m venv .venv
 .venv\Scripts\Activate.ps1          # Windows (PowerShell)

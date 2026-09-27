@@ -4,6 +4,7 @@ Convierte un `.py` con marcadores de celda `# %%` en un `.ipynb` de verdad.
     python tools/py_to_notebook.py                  # regenerar todas las etapas
     python tools/py_to_notebook.py --check           # fallar si algún .ipynb quedó desactualizado
     python tools/py_to_notebook.py --only 02_pretraining
+    python tools/py_to_notebook.py --bootstrap-only   # actualizar solo el arranque; conservar salidas
     python tools/py_to_notebook.py --source foo.py --destination foo.ipynb
 
 POR QUÉ EXISTE ESTE PASO
@@ -68,8 +69,8 @@ CELL_MARKER = re.compile(r"^#\s*%%(.*)$")
 # la URL de clonado: la celda de arranque de más abajo se inyecta como celda 1 de cada
 # .ipynb generado, así que los seis notebooks quedan sincronizados automáticamente.
 URL_PLACEHOLDER = "CHANGEME"
-REPO_URL = "https://github.com/solidgoldmagickarp/proyecto_de_lenguaje_emergente.git"
-REPO_DIR = "proyecto_de_lenguaje_emergente"
+REPO_URL = "https://github.com/facurie/Proyecto1_IA_Generativa.git"
+REPO_DIR = "Proyecto1_IA_Generativa"
 # El repositorio tiene que ser PÚBLICO: el `git clone` del arranque es sin autenticación, así que una
 # URL privada falla en Colab exactamente igual que una equivocada.
 
@@ -88,13 +89,10 @@ if "google.colab" in sys.modules:
     REPO_URL = "{REPO_URL}"
     REPO_DIR = "{REPO_DIR}"
 
-    # El orden de las guardas importa: primero probar DÓNDE estamos, después qué hay en disco.
-    # `isdir(REPO_DIR)` es relativo, así que chequearlo primero clonaría una copia
-    # anidada en cualquier re-ejecución de esta celda dentro de la misma sesión (algo rutinario).
-    if os.path.basename(os.getcwd()) != REPO_DIR:
-        if not os.path.isdir(REPO_DIR):
-            subprocess.run(["git", "clone", "--depth", "1", REPO_URL, REPO_DIR], check=True)
-        os.chdir(REPO_DIR)
+    repo_path = os.path.join("/content", REPO_DIR)
+    if not os.path.isdir(repo_path):
+        subprocess.run(["git", "clone", "--depth", "1", REPO_URL, repo_path], check=True)
+    os.chdir(repo_path)
     if os.getcwd() not in sys.path:
         sys.path.insert(0, os.getcwd())
 
@@ -112,7 +110,7 @@ if "google.colab" in sys.modules:
     #
     # from google.colab import drive
     # drive.mount("/content/drive")
-    # PERSISTENT = "/content/drive/MyDrive/proyecto_de_lenguaje_emergente/checkpoints"
+    # PERSISTENT = "/content/drive/MyDrive/Proyecto1_IA_Generativa/checkpoints"
     # os.makedirs(PERSISTENT, exist_ok=True)
     # if os.path.islink("checkpoints"):
     #     print("checkpoints ->", os.readlink("checkpoints"))
@@ -227,6 +225,35 @@ def build_notebook(cells: list[tuple[str, str]]) -> dict:
     }
 
 
+def update_bootstrap(destination: Path, check: bool) -> bool:
+    """Actualiza solo la primera celda de un notebook ejecutado, sin tocar sus resultados."""
+    if not destination.is_file():
+        print(f"FALTA {destination.name}: ejecutá el script sin --bootstrap-only.")
+        return False
+
+    nb = json.loads(destination.read_text(encoding="utf-8"))
+    first = nb["cells"][0]
+    if first["cell_type"] != "code" or "arranque en Colab" not in "".join(first["source"][:1]):
+        print(f"{destination.name}: la primera celda no es el arranque de Colab esperado.")
+        return False
+
+    source = _to_lines(BOOTSTRAP_CELL.rstrip("\n"))
+    if check:
+        if first["source"] != source:
+            print(f"{destination.name}: arranque de Colab desactualizado.")
+            return False
+        print(f"OK: arranque de {destination.name} actualizado; salidas conservadas.")
+        return True
+
+    first["source"] = source
+    first["execution_count"] = None
+    first["outputs"] = []
+    first["metadata"] = {}
+    destination.write_text(json.dumps(nb, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    print(f"arranque actualizado: {destination.name}; otras celdas y salidas conservadas.")
+    return True
+
+
 def convert_one(source: Path, destination: Path, check: bool) -> bool:
     """Devuelve True si salió bien (o si el --check coincide limpio), False si falló."""
     if not source.is_file():
@@ -278,6 +305,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--check", action="store_true",
                     help="no escribir; fallar si algún .ipynb no coincide con su .py")
+    ap.add_argument("--bootstrap-only", action="store_true",
+                    help="actualizar/comprobar solo la primera celda sin borrar resultados ejecutados")
     ap.add_argument("--only", type=str, default=None,
                     help="restringir a una sola etapa por su stem, p. ej. 02_pretraining")
     ap.add_argument("--source", type=Path, default=None,
@@ -287,7 +316,11 @@ def main() -> int:
 
     if args.source is not None:
         destination = args.destination or args.source.with_suffix(".ipynb")
-        return 0 if convert_one(args.source, destination, args.check) else 1
+        if args.bootstrap_only:
+            ok = update_bootstrap(destination, args.check)
+        else:
+            ok = convert_one(args.source, destination, args.check)
+        return 0 if ok else 1
 
     pairs = STAGES.items() if args.only is None else {args.only: STAGES[args.only]}.items()
 
@@ -297,7 +330,9 @@ def main() -> int:
         if not source.is_file():
             continue  # etapa todavía no escrita -- no todas las etapas existen en todo momento de la construcción
         any_found = True
-        all_ok = convert_one(source, destination, args.check) and all_ok
+        result = (update_bootstrap(destination, args.check) if args.bootstrap_only
+                  else convert_one(source, destination, args.check))
+        all_ok = result and all_ok
 
     if not any_found:
         print("todavía no se encontró ningún .py de etapa.")
