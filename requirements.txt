@@ -44,7 +44,7 @@ matplotlib           # curvas de pérdida, scatter plots de embeddings
 # =============================================================================
 # Cliente nativo de Ollama (no el compatible con OpenAI) -- habla con el servidor
 # local de Ollama levantado dentro de la VM de Colab.
-ollama>=0.4
+ollama>=0.5          # `think=False` (Etapa 5) necesita el cliente >= 0.5
 requests             # sondear localhost:11434 mientras el servidor de Ollama arranca
 
 # =============================================================================
