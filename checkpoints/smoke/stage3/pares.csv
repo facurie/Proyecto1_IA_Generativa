@@ -1,4 +1,0 @@
-tipo_corrida,palabra_a,palabra_b,expectativa,id_a,id_b,coseno_inicial,coseno_entrenado,delta,percentil_coseno_inicial,percentil_coseno_entrenado,percentil_delta
-SMOKE · validación técnica,dog,cat,relacionado,643,705,0.03137543,0.16164276,0.13026732,68.55,99.53999999999999,99.98
-SMOKE · validación técnica,happy,sad,relacionado,402,571,0.043468803,0.17774242,0.13427362,74.92999999999999,99.78,99.98
-SMOKE · validación técnica,dog,spoon,esperado lejano,643,2080,-0.01875496,-0.007179916,0.011575043,37.37,44.39,72.54

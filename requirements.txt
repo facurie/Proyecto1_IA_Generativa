@@ -27,7 +27,7 @@ tokenizers>=0.20
 # TinyStories / TinyStories-Instruct, traídos del Hub.
 datasets>=2.20
 
-# usada directamente por verify_setup.py para un chequeo liviano de metadatos del Hub.
+# la usa `datasets` para bajar TinyStories del Hub.
 huggingface_hub>=0.25
 
 # El tokenizador real de GPT-2, para la comparación de conteo de tokens de la Etapa 1.
@@ -51,6 +51,5 @@ requests             # sondear localhost:11434 mientras el servidor de Ollama ar
 # utilidades
 # =============================================================================
 psutil       # RAM del proceso, usada por environment.py cuando no hay GPU para consultar
-ipykernel    # permite que VS Code / Jupyter ejecuten los archivos .ipynb generados
-nbclient     # run_all.py: ejecuta los notebooks en orden y guarda las salidas
+ipykernel    # permite que VS Code / Jupyter ejecuten los notebooks localmente
 ipywidgets   # barras de progreso de tqdm limpias dentro de los notebooks
