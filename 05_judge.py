@@ -793,7 +793,10 @@ Corrida local (RTX 5070 Laptop, 8 GB), `run_all.py --modo completo`, semilla 133
 `think=False` y `format="json"`. **264 evaluaciones**: 4 modelos × 48 textos (6 prompts de cuento y 6 de
 instrucción × 4 muestras) más 72 anclas — cuentos reales, esos mismos cuentos con las palabras mezcladas, y
 cuentos reales evaluados contra una instrucción que no les corresponde. Las cifras salen de
-`checkpoints/stage5/`.
+`checkpoints/stage5/`. En la ejecución que quedó guardada en este notebook las respuestas del juez se leyeron
+de la caché de la primera corrida completa (`juez_respuestas.jsonl`), y por eso la celda dice "listo en 0s";
+esa primera vez, las 264 llamadas tardaron 165 segundos. Los textos evaluados son los mismos: las generaciones
+salen idénticas con la misma semilla.
 
 ### 1. ¿Es confiable el juez? Sí para gramática y coherencia, no para obediencia
 
@@ -882,4 +885,43 @@ piso cuando todos los modelos son malos, y su obediencia se deja llevar por la c
   diferencias grandes (anclas, obediencia del SFT), no para las de décimas.
 - El juez tiene 4B parámetros. Con un juez más grande, el efecto piso probablemente se abriría en más
   escalones.
+"""
+
+# %% [markdown]
+r"""
+## Cierre del proyecto: qué muestra el pipeline completo
+
+**La tesis de la consigna es "misma arquitectura, mejores datos → aparece el significado". Nuestra lectura, con
+nuestros números: aparece, pero en un orden. Primero la forma, después —y a medias— el contenido.** Lo vimos tres
+veces, en tres etapas distintas, y coincide con lo que reporta el paper (la gramática llega antes que la
+consistencia):
+
+1. **Preentrenamiento (Etapa 2).** El mismo GPT de la clase pasa de adivinar al azar (pérdida 9,06 ≈ ln 8.192) a sus
+   primeras oraciones bien formadas en unos 500 pasos (pérdida 3,3), sostiene un personaje con nombre desde el paso
+   2.000 (2,56) y termina en perplejidad 10,1. La coherencia del cuento entero, en cambio, no llega: el juez le pone
+   consistencia 2,2 sobre 10, contra 8,8 de un cuento real.
+2. **SFT (Etapa 4).** En 1.500 pasos (1,7 minutos) el modelo aprende el formato —pasa de 0 % a 92,5 % de cuentos
+   cuando solo le damos la línea `Words:`—, mientras que usar las palabras pedidas se mueve mucho menos: la ganancia
+   sobre el azar pasa de 0,11 a 0,32, y con la plantilla `solo Words` no cambia.
+3. **Evaluación (Etapa 5).** La perplejidad mide forma: cuánto se parece un texto al corpus. Por eso castiga al SFT
+   por cambiar de formato (10,3 → 13,1) aunque el juez no lo vea peor, y por eso el modelo encuentra más probables
+   sus propias muestras (NLL 2,29) que los cuentos reales (2,39), que el juez separa por 6 puntos de gramática.
+
+**Cómo se encadenan las piezas.** El tokenizador decide las unidades: con 8.192 entradas, casi cada palabra es un
+token (Etapa 1). El preentrenamiento les da relaciones: *dog* termina junto a *cat* y *puppy*, y *spoon* junto a
+*fork* y *bowl*, muy por encima de los controles al azar (Etapa 3); y además aprende la gramática local. El SFT no
+agrega conocimiento: reusa esas representaciones para instalar un comportamiento, y lo que más le cuesta es
+justo lo que pide contenido, como usar una palabra 50 a 100 tokens después de haberla leído. El juez, por último,
+muestra lo que la perplejidad no ve. Cada etapa se apoya en la anterior: los vecinos de la Etapa 3 existen porque
+el tokenizador hizo de *dog* una sola fila, y el SFT funciona tan rápido porque el base ya sabía escribir cuentos
+(con `Words + Story` arranca uno el 92,5 % de las veces antes de cualquier SFT).
+
+**Lo que no probamos, y habría que probar.** Nuestro contraste con "datos peores" es el del paper y el del
+Transformer de caracteres sobre Shakespeare que vimos en clase, y ese contraste no mueve una sola variable: cambian
+los datos, pero también el tokenizador (caracteres contra BPE) y la escala. El experimento limpio es entrenar este
+mismo modelo, con los mismos pasos, sobre 82M tokens de texto web (lo planteamos en la Etapa 0). Con más tiempo,
+eso iría primero; después, tres semillas para la ablación y un SFT que enmascare la instrucción.
+
+El registro de decisiones del proyecto —con qué contábamos, qué recortamos y por qué, y dónde terminamos contra lo
+planeado— está al final del notebook `00_dataset`, junto con cómo usamos IA.
 """

@@ -780,3 +780,90 @@ r"""
 Lo que sigue: Etapa 3 (`03_embeddings.py`) — la tabla de embeddings de `pretrain_wide.pt` contra la de
 `pretrain_step0.pt`.
 """
+# %% [markdown]
+r"""
+## Informe y conclusiones de la Etapa 2
+
+Este informe interpreta la corrida completa guardada en este notebook (el log de entrenamiento de cada modelo está en su celda) y su tabla de ablación. A lo largo del informe distinguimos estructura de oración de coherencia, menciones de uso correcto del contexto y resultados medidos de posibles explicaciones.
+
+### Respuestas conceptuales
+
+**¿Cuándo deja de ser ruido?** Las primeras frases reconocibles aparecen con una pérdida de validación de aproximadamente **4,0 a 3,3**. En el paso 0, con pérdida cercana a 9, ambos modelos mezclan palabras y fragmentos sin conexión. A los 250–500 pasos aparecen estructuras de oración y frases como “She was happy.”, todavía rodeadas de errores. Entre pérdidas de **3,0 y 2,6** vemos más organización narrativa y, desde el paso 2.000, ambos sostienen el nombre Lily. Sin embargo, al terminar en **2,311 y 2,336** siguen confundiendo acciones, objetos y pronombres. La estructura local aparece antes que la consistencia; no encontramos un umbral que garantice cuentos coherentes ni gramática completamente estabilizada.
+
+**¿Se reproduce ancho–conocimiento y profundidad–contexto?** Solo encontramos indicios parciales. Ambos modelos aciertan **2 de 10** prompts de recuerdo, aunque el ancho asigna más probabilidad media a las respuestas admitidas: **0,121 frente a 0,101**. El profundo obtiene más reuso de palabras clave, **0,58 frente a 0,52**, pero los textos muestran que repetir nombres no implica conservar identidades. La escala, el entrenamiento todavía en progreso y el diseño de los prompts podrían explicar la falta de una diferencia clara; no los identificamos como causas demostradas. Una sola semilla y pocos casos no permiten confirmar el paper ni declarar una superioridad general.
+
+**¿Qué se recortó?** Se utilizaron 400.000 cuentos, dos configuraciones de unos 5–6 millones de parámetros, contexto de 256 tokens y 5.000 pasos por modelo. Se mantuvo la ablación, pero no se exploraron varias semillas, más arquitecturas ni una evaluación amplia. La corrida registrada usó una RTX 5070 Laptop con aproximadamente 8 GB de VRAM, precisión mixta y almacenamiento del corpus en `uint16` para reducir memoria. No consta que un fallo de memoria impusiera ese presupuesto. **El límite fue el tiempo, no la memoria.** El trabajo del grupo se concentró en los tres días previos a la entrega, y queríamos que esta etapa corriera en minutos para dejar lugar a las Etapas 3 a 5: el ancho tardó 6,3 minutos y el profundo 8,5. Con 5.000 pasos × 64 ventanas × 256 tokens = 81,9 millones de tokens, 400.000 cuentos (88,5 millones) alcanzan para que cada modelo procese menos tokens de los que tiene el corpus (0,93 épocas): casi no ve dos veces lo mismo, y la brecha entre entrenamiento y validación queda en 0,04. Corrimos en la notebook con la RTX 5070 y no en Colab porque así el pipeline entero tardaba poco más de media hora, sin depender de sesiones que se cortan ni de montar Drive para no perder los checkpoints; los notebooks siguen preparados para Colab (primera celda). El registro de decisiones del proyecto está al final del notebook `00_dataset`. Con más recursos priorizaríamos repeticiones y mejores pruebas de contexto antes de aumentar el tamaño.
+
+**¿Dónde quedamos frente a Chinchilla?** Había **88,53 millones de tokens disponibles** en entrenamiento, pero cada modelo procesó **81,92 millones**: 5.000 pasos × 64 ventanas × 256 tokens. Las ventanas aleatorias pueden repetirse, por lo que el equivalente a 0,93 épocas no representa un recorrido ordenado del 93 % del corpus. Los tokens de validación no se usan para actualizar parámetros.
+
+Contando todos los parámetros, procesamos aproximadamente **14,0 tokens por parámetro en el ancho y 15,1 en el profundo**. Eso representa el **70 % y 76 %** de la referencia de 20 tokens por parámetro. Podría haber quedado capacidad sin aprovechar, pero no podemos cuantificar cuánto rendimiento faltó. Si contamos solo los bloques, lo procesado equivale a **2,60 y 1,84 veces** esa referencia. El cambio se debe al enorme peso de embeddings y salida, no a que el mismo entrenamiento sea simultáneamente insuficiente y excesivo. La categoría “bloques” también excluye posiciones y normalización final. La regla es orientativa: Chinchilla estudia otras escalas y presupuestos, y superar ese cociente no demuestra sobreajuste ni desperdicio. [Hoffmann et al., 2022](https://arxiv.org/abs/2203.15556).
+
+### Diseño y comparación de los modelos
+
+**El experimento, en corto.** *Hipótesis* (la del paper): con una cantidad de parámetros parecida, el modelo ancho debería recordar mejor datos comunes y el profundo sostener mejor, varias oraciones después, lo que apareció antes en el cuento. *Qué variamos:* solo el ancho del residual y la cantidad de capas (256 × 2 contra 192 × 5; las cabezas pasan de 8 a 6 para que cada una siga teniendo 32 dimensiones). *Qué dejamos fijo:* tokenizador, datos, orden de los batches, semilla, contexto, optimizador y presupuesto de pasos, detallados abajo. *Cómo lo medimos:* pérdida y perplejidad sobre `validation`, diez prompts de recuerdo (acierto greedy y probabilidad de la respuesta), cinco prompts de consistencia con cinco muestras cada uno, y la lectura de las muestras. Contamos los parámetros antes de entrenar: el profundo tiene un 7,2 % menos en total, pero un 41 % más en los bloques.
+
+El modelo aprende a predecir el próximo token a partir de los anteriores. El BPE de la Etapa 1 define las **8.192 unidades** con las que representamos el texto; el preentrenamiento aprende sus combinaciones y dependencias. La pérdida recompensa acertar el siguiente token, sin evaluar directamente si la historia completa tiene sentido.
+
+Cada cuento termina con `<|endoftext|>` y se concatena con el siguiente. El delimitador señala límites y puede detener la generación, pero no impide atender al cuento anterior dentro de una ventana. Elegimos 256 tokens porque el **90,2 %** de los cuentos medidos en la Etapa 1 cabía por longitud, frente al 60,4 % con 192. Ese porcentaje se midió sobre cuentos de `validation`, y los de `train` son algo más largos (221 tokens por cuento contra 201, contando el `<|endoftext|>`, según la tokenización de arriba): entre los datos de entrenamiento, la fracción que entra es menor. Además, las ventanas comienzan al azar: pueden cortar cuentos o mezclar el final de uno con el principio de otro.
+
+Los modelos comparten datos, orden de batches, semilla 1337, contexto, dropout de 0,1 y presupuesto. Usan AdamW, calentamiento de 100 pasos, tasa de aprendizaje de 3e-4 con descenso coseno hasta 3e-5, weight decay de 0,1 sobre matrices y recorte de gradiente de 1,0. La validación utiliza un split separado y 50 batches fijos por evaluación, sin dropout, para comparar la evolución sobre las mismas ventanas.
+
+| Configuración o resultado | Ancho | Profundo |
+|---|---:|---:|
+| Dimensión / capas | 256 / 2 | 192 / 5 |
+| Cabezas × dimensión por cabeza | 8 × 32 | 6 × 32 |
+| Parámetros totales | 5.846.528 | 5.424.896 |
+| Embeddings de tokens y posiciones | 2.162.688 | 1.622.016 |
+| Bloques Transformer | 1.577.984 | 2.221.440 |
+| Salida y normalización final | 2.105.856 | 1.581.440 |
+| Pérdida de entrenamiento | 2,273 | 2,297 |
+| Pérdida de validación | 2,311 | 2,336 |
+| Perplejidad de validación | 10,08 | 10,34 |
+| Recuerdo: aciertos greedy | 2/10 | 2/10 |
+| Recuerdo: probabilidad media admitida | 0,121 | 0,101 |
+| Reuso de palabras clave | 0,52 | 0,58 |
+| Tiempo registrado | 6,34 min | 8,52 min |
+
+Embeddings y salida no comparten pesos: sus matrices principales crecen como vocabulario × ancho, mientras que los bloques crecen aproximadamente como capas × ancho². Por eso reducir el ancho a la mitad y duplicar las capas no conserva parámetros. Nuestro profundo tiene **7,2 % menos parámetros totales**, pero **41 % más en los bloques**. Embeddings y salida concentran aproximadamente el 73 % del ancho y el 59 % del profundo: también cambia dónde se distribuye la capacidad.
+
+Igualar pasos y tokens tampoco iguala costo: el profundo tardó aproximadamente **34 % más**. El tiempo registrado incluye evaluaciones y tareas intercaladas, no solo actualizaciones. El ancho obtiene una ventaja de **0,025 en pérdida de validación** y aproximadamente **2,5 % en perplejidad**, válida para esta corrida, sin demostrar superioridad general.
+
+### Curvas y muestras: qué mejora y qué falta
+
+La entropía cruzada penaliza asignar poca probabilidad al token correcto; la **perplejidad = exp(pérdida)** expresa esa misma medición en otra escala. Los valores iniciales, 9,063 y 8,988, están cerca de ln(8.192) ≈ 9,01, la referencia de una predicción uniforme. A los 500 pasos, las perplejidades ya bajan a 26,8 y 30,8. Después las mejoras se vuelven menores.
+
+La distancia final entre entrenamiento y validación es de aproximadamente **0,038–0,039**. No vemos una subida de validación mientras entrenamiento sigue bajando: no hay una señal clara de sobreajuste en estas curvas. Tampoco demostramos convergencia. Comparando el mismo tramo, del paso 4.250 al 5.000, validación baja **0,020 en el ancho y 0,025 en el profundo**. Ambos seguían mejorando; la desaceleración también coincide con la reducción programada de la tasa de aprendizaje.
+
+Las muestras permiten interpretar esa mejora sin confundirla con calidad narrativa:
+
+- **Paso 500:** el ancho combina “She was happy.” con “Jane was a would go home.”. El profundo escribe “a little girl named she loved to play”: reconoce una fórmula, pero no completa correctamente el nombre.
+- **Paso 1.000:** aparecen oraciones como “She saw a big trunk and melted.” en el ancho y “she saw a voice” en el profundo. La estructura mejora antes que el sentido.
+- **Paso 2.000:** ambos conservan a Lily, pero el ancho cierra con “promised to never peanut on things again” y el profundo con “she went to play together and died.”. Aprender una fórmula de cierre no equivale a resolver la historia.
+- **Paso 5.000:** el ancho mantiene muñecas y ropa, pero introduce referencias ambiguas y “she put it on harder”. El profundo hace que un búho llame “bird” a Lily y luego confunde pronombres. Los finales truncados deben interpretarse considerando el límite de **120 tokens nuevos**: un corte no demuestra por sí solo incapacidad para terminar.
+
+La semilla fija controla el muestreo, pero una trayectoria no representa toda la calidad del modelo. Palabras como “harder” o “peanut” reaparecen entre muestras; compartir el generador aleatorio puede contribuir, aunque no probamos esa causa. También observamos `â€œ` en una continuación. La Etapa 1 midió que el 6 % de los cuentos held-out tiene texto mal codificado de esa misma familia (`â€`: el `’` guardado como `â€™`, el `“` como `â€œ`), así que lo más probable es que el modelo lo haya aprendido del corpus; no rastreamos qué cuentos de entrenamiento lo originan.
+
+### Qué miden realmente los prompts
+
+En recuerdo, **greedy** elige el token más probable y se verifica la primera palabra generada. La probabilidad admitida suma, en cambio, la masa de los tokens aceptados como respuesta inmediata. El ancho acierta pez → “sea” y fuego → “hot”; el profundo, pez → “pond” y aves → “fly”. La probabilidad permite distinguir asociaciones que el empate 2/10 oculta: para fuego da **0,186 frente a 0,058**, mientras que para aves favorece al profundo, **0,245 frente a 0,079**.
+
+El conjunto de respuestas condiciona el resultado: para el pez se admiten seis palabras, pero para el cielo solo “blue”, por lo que “dark” cuenta como error aunque sea posible. La probabilidad solo contempla respuestas de un token con espacio inicial. Además, los prompts son fragmentos de texto presentados como inicio de cuento, no preguntas explícitas. La métrica mide esas continuaciones y respuestas admitidas, no conocimiento factual general.
+
+En consistencia hay **cinco prompts × cinco muestras = 25 generaciones por modelo**, no 25 prompts diferentes. Con dos palabras clave, el reuso equivale a **26 frente a 29 menciones sobre 50 posibles**. Se cuenta presencia al menos una vez, sin exigir reaparición tardía o uso correcto. Las salidas impresas muestran la primera generación de cada prompt; bastan para detectar límites de la métrica:
+
+- Ambos alcanzan 100 % con Mia y la pelota, aunque el ancho termina haciendo que Mia huya de Mia.
+- El profundo logra 100 % con Tom y Max mientras escribe “Hi, I'm Tom,” Max said: repetir ambos nombres encubre una confusión de identidad.
+- Ambos mencionan a Ben y el castillo, pero las acciones se desvían hacia objetos desconectados. En el caso de Pip y la pluma, ambos abandonan las palabras clave.
+
+También podría haber continuidad correcta mediante pronombres sin repetir un nombre. Por eso el reuso puede premiar incoherencias y penalizar continuidades válidas. La diferencia de tres menciones es una tendencia descriptiva; no estimamos significancia ni variabilidad entre corridas.
+
+Como evidencia complementaria, el juez de la Etapa 5 da consistencia **2,17 al ancho y 1,96 al profundo**, en dirección opuesta al reuso. Evalúa **24 textos por modelo, con otros prompts y generaciones**, y presenta un efecto piso en gramática: tampoco es una medida definitiva. Sus perplejidades, **10,32 y 10,58**, corresponden a otra evaluación con otros batches; no reemplazan las **10,08 y 10,34** de esta etapa ni indican entrenamiento adicional de los modelos base.
+
+### Conclusión y experimento pendiente
+
+El resultado central es que **mejorar la predicción local puede convivir con historias incoherentes**. En validación el modelo recibe contexto real; al generar, continúa sus propias decisiones y errores. Puede conservar frases típicas y nombres mientras pierde quién posee un objeto o por qué ocurre una acción. Los ejemplos de Mia y Max muestran por qué una métrica de repetición da una impresión engañosa de memoria.
+
+Podemos sostener que ambos modelos aprendieron estructura lingüística y que el ancho obtuvo una pequeña ventaja predictiva con menor tiempo de ejecución. Sigue abierto si la profundidad favorece el contexto bajo más entrenamiento y una evaluación adecuada.
+
+**Como experimento futuro**, repetiríamos el par con al menos tres semillas y relatos que introduzcan una relación explícita —quién guarda una llave y dónde—. Evaluaríamos su recuperación tras 32, 64 y 128 tokens, controlando el texto intermedio y manteniéndolo dentro del contexto. Combinaríamos aciertos, probabilidades y lectura de continuaciones. Así podríamos medir si la ventaja depende de la distancia al dato y se sostiene entre corridas. Esta prueba está propuesta, no realizada.
+"""

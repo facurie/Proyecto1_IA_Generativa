@@ -967,6 +967,13 @@ La medición completa (`forma_contenido.csv`, `contenido_bootstrap.csv`):
 - **La forma se movió primero.** En el panel derecho de las curvas, "arranca cuento" ya estaba en 75 % en
   el paso 300 (de 1.500) y en 100 % desde el 900, subiendo de manera monótona; el uso de palabras osciló
   entre 0,33 y 0,75 sin tendencia limpia.
+- **En `solo Words` se movió una dimensión y la otra no.** Con esa plantilla, uso − piso da 0,22 en el base,
+  0,24 en el completo y 0,24 en LoRA: el contenido quedó igual mientras la forma pasaba de 0 % a 92,5 %. Es
+  exactamente el caso que anticipa la consigna. (La comparación es aproximada: cuando un modelo no escribe
+  `Story:`, como el base, "el cuento" es toda la continuación; cuando lo escribe, solo lo que viene después.)
+- **Un número de la tabla que no hay que creerle.** `contenido_bootstrap.csv` dice que el base "le gana al
+  azar", pero la cota inferior de su intervalo es 3,5·10⁻¹⁸: un cero con error de redondeo de punto
+  flotante. Leemos ese intervalo como [0,00, 0,19], que toca el cero.
 - **Efecto secundario.** El SFT a veces mete líneas de encabezado dentro del cuento: 0,6 por generación en
   el completo (0,25 en LoRA), 0 en el base. Aprendió tan bien el formato que a veces lo sobreaplica.
 
@@ -1028,4 +1035,8 @@ con este presupuesto no se puede afirmar que LoRA olvide menos, aunque no toque 
 - Una sola semilla de entrenamiento por configuración: no hay variabilidad entre corridas.
 - 40 generaciones por celda de la tabla. Alcanza para las diferencias grandes (forma), no para las de
   décimas.
+- El 40 % de los registros de Instruct no entra en `block_size + 1 = 257` tokens y pierde el final del
+  cuento (mediana de 244 tokens por registro, p90 de 372). El SFT ve muchos cuentos sin su cierre; igual el
+  completo termina el 92,5 % de sus cuentos, lo mismo que el base, que lo había aprendido en el
+  preentrenamiento.
 """

@@ -61,7 +61,7 @@ Ejecutá los archivos de cada etapa desde la raíz del repositorio — leen y es
 | `00_dataset.py` | Sección 0 — descargar TinyStories, inspeccionarlo, argumentar por qué un vocabulario acotado es un instrumento de laboratorio. |
 | `data.py` | Cargadores de datasets compartidos — incluye un parser hecho desde cero para el formato de una-línea-por-fila de `TinyStories-Instruct`. |
 | `environment.py` | Cableado del entorno local: caché de HF dentro del repositorio, bundle de certificados para proxy corporativo, detección del dispositivo. |
-| `tools/py_to_notebook.py` | Regenera el `.ipynb` de cada etapa a partir de su fuente `.py`. |
+| `tools/py_to_notebook.py` | Regenera el `.ipynb` de cada etapa a partir de su fuente `.py`, conservando las salidas de las celdas cuyo código no cambió. |
 | `tools/ca_bundle_windows.py` | Corrige la falla de TLS de `huggingface_hub` detrás de un proxy corporativo que inspecciona TLS. |
 | `verify_setup.py` | Chequeo del entorno. |
 

@@ -15,10 +15,12 @@ No se activa automáticamente en CPU ni se sustituyen archivos faltantes.
 de checkpoints elegido. Una nueva ejecución reemplaza esos resultados de análisis.
 Ejecutá las celdas en orden desde la raíz del repositorio.
 
-Los checkpoints actuales **no guardan la semilla ni una huella del tokenizer**.
-Usá el tokenizer original y dos checkpoints de la misma corrida; las verificaciones
-de tamaño y configuración no pueden demostrar esa procedencia. La semilla de abajo
-controla el análisis, no certifica la semilla usada al entrenar.
+Los checkpoints de la Etapa 2 **guardan la huella SHA-1 del tokenizer** con el que se
+entrenaron (`tokenizer_sha1`); en esta corrida, la de los dos checkpoints coincide con la
+de `checkpoints/tokenizer.json` (`f0992173…`). Este notebook no la vuelve a chequear en
+código: lo verificamos aparte, leyendo ese campo. Lo que los checkpoints **no guardan es la
+semilla**: la de abajo controla el análisis, no certifica la usada al entrenar. Usá el
+tokenizer original y dos checkpoints de la misma corrida.
 """
 
 # %%
@@ -479,12 +481,14 @@ r"""
 
 Guardamos los IDs de cada par de control, consulta del piso de máximos y palabra de la
 PCA. El archivo de metadatos registra las rutas, pasos, configuraciones, semillas y
-versiones de paquetes. La huella del tokenizer que guardamos **ahora** sirve para
-identificar esta ejecución; no demuestra qué tokenizer produjo los checkpoints viejos.
+versiones de paquetes. La huella SHA-256 del tokenizer que guarda este análisis identifica
+esta ejecución; qué tokenizer produjo cada checkpoint lo dice su propio campo
+`tokenizer_sha1` (la leyenda `provenance_limit` que escribe el código es anterior a ese
+campo y quedó desactualizada).
 
 Los CSV y PNG de una corrida `SMOKE_TEST` se rotulan como **validación técnica**. Las
-conclusiones sobre el aprendizaje de la corrida completa quedan pendientes de correr
-con sus artefactos y examinar los resultados.
+salidas guardadas en este notebook corresponden a la **corrida completa**; las respuestas
+y la reflexión que siguen se basan en esos resultados.
 """
 
 # %%
@@ -539,44 +543,98 @@ print(f"{RUN_LABEL}: {len(tables)} tablas, 2 gráficos y metadatos guardados en 
 
 # %% [markdown]
 r"""
-## 7 · Las cuatro preguntas para el informe
+## 7 · Respuestas a las cuatro preguntas
 
-Completá estas respuestas después de ejecutar **la corrida completa**. Registrá el paso
-analizado y si coincide con el mejor disponible. Un resultado débil, bien delimitado,
-también responde la consigna; no se requiere que estos pares confirmen la expectativa.
+Analizamos el **modelo ancho de la Etapa 2, del paso 0 al paso 5.000**, con embeddings de 256 dimensiones. En las salidas guardadas, el paso 5.000 coincide con la mejor pérdida de validación del historial disponible: **2,310681**. Las cifras que discutimos abajo provienen de esta corrida completa, no del modo `SMOKE_TEST`.
 
-1. **Dos pares cerca y uno lejos: ¿le pegaron y la diferencia le gana al ruido?**
-   Usá `pares.csv`, `vecinos_palabras.csv`, `controles_percentiles.csv`, `piso_ruido.csv`
-   y `controles_ruido.png`. Compará tanto el coseno inicial/entrenado como el cambio
-   contra los mismos controles. Para juzgar vecinos encontrados buscando, usá la
-   distribución de máximos iniciales, no sólo `1/√n_embd`. El P95 orienta la lectura;
-   superarlo no prueba semántica. ¿dog–cat y happy–sad se desplazan más que los controles?
-   ¿dog–spoon contradice la predicción? Evitá elegir nuevos pares después de mirar y
-   presentarlos como si se hubieran fijado antes.
+### 1. ¿Los pares elegidos quedaron cerca o lejos? ¿El cambio se distingue del ruido?
 
-2. **¿Qué cambió a la vista entre las proyecciones 2D?**
-   Usá `pca_comparada.png` y `pca_coordenadas.csv`, con iguales ejes y la varianza
-   explicada indicada. Describí cambios visibles y contrastalos con cosenos en la
-   dimensión original. La superposición o separación en dos ejes puede esconder
-   cambios en dimensiones descartadas.
+**Los dos pares que esperábamos cercanos se acercaron mucho más que la mayoría de los controles. La expectativa para `dog–spoon` se sostiene en términos relativos.** Resumimos los cosenos y sus cambios, redondeados a tres decimales; el cambio se calculó antes de redondear.
 
-3. **¿Filtrar palabras enteras cambia lo que ven?**
-   Contrastá `vecinos_filtrado.csv` y `resumen_filtrado.csv`: la consulta sigue siendo
-   la misma fila `Ġpalabra`. Usá `ejemplo_day.csv` para mostrar que `Ġday` y `day`
-   son IDs diferentes. Discutí la composición de vecinos y el tamaño del conjunto de
-   candidatos; no infieras frecuencias de uso ni filas sin entrenar sin medirlas.
+| Par | Expectativa | Coseno inicial | Coseno entrenado | Cambio |
+|---|---|---:|---:|---:|
+| `dog–cat` | Cerca | 0,031 | 0,587 | +0,555 |
+| `happy–sad` | Cerca | 0,043 | 0,456 | +0,413 |
+| `dog–spoon` | Más lejos | −0,019 | 0,157 | +0,176 |
 
-4. **Si el espacio entrenado se parece al inicial, ¿qué cambiarían y cuánto costaría?**
-   Primero distinguí falta de evidencia en estas mediciones de ausencia de aprendizaje:
-   estos embeddings son estáticos, mientras que el modelo también aprende en las capas
-   posteriores. Considerá más pasos (más cómputo y posible sobreajuste), más datos
-   diversos y pertinentes (tokenización, almacenamiento y entrenamiento adicionales),
-   o distinta dimensión (cambia capacidad, memoria, costo por paso y escala `1/√d`).
-   Cambiá una variable por vez, guardá una nueva referencia inicial de esa corrida y
-   recalculá sus controles. Medí el costo junto con la pérdida de validación antes de
-   atribuir una mejora al cambio. Para afirmar robustez, repetir con otras semillas
-   también cuesta corridas adicionales.
+Los histogramas ayudan a poner esos números en contexto. Antes de entrenar, los 10.000 pares aleatorios se concentran alrededor de cero y nuestros tres pares están dentro de esa zona. Después, la distribución de controles se ensancha y su media pasa de 0,000841 a 0,022445. Por eso no alcanza con observar que un coseno aumentó: también cambió la geometría del conjunto. En el histograma de cambios, la mediana de los controles es 0,013 y el percentil 95 es 0,215; los aumentos de `dog–cat` y `happy–sad` quedan muy por encima de esas referencias. Sus cambios están en los percentiles empíricos 99,99 y 99,89, respectivamente. Esto respalda una reorganización especialmente marcada para estos pares, aunque no demuestra que el resto del espacio haya quedado igual.
 
-**Conclusiones de la corrida completa:** pendientes de ejecutar y redactar con evidencia
-propia. Los resultados rotulados SMOKE sólo validan que este análisis funciona.
+`dog–spoon` termina menos cerca que los otros dos pares, pero su aumento de 0,176 no es nulo ni despreciable. El coseno final queda en el percentil 89,85 de los controles y el cambio en el 91,62: ambos están por debajo de sus respectivos percentiles 95. Nuestra predicción funciona si «lejos» significa **menos similar que los pares relacionados**, no si significa ausencia de relación. Podría influir una reorganización más general o algún contexto compartido en los cuentos; estas mediciones no permiten decidir cuál explicación pesa más.
+
+Los vecinos aportan una lectura concreta. Al inicio, cerca de `dog` aparecen `germs`, `danger` y `stay`; después aparecen `cat` (0,5867), `puppy` (0,5520), `pup` y `wolf`. Para `cat`, los primeros vecinos incluyen `dog`, `mouse`, `puppy` y `kitten`. Vemos un entorno más reconocible de animales, aunque la aparición de `monster` entre los vecinos de `dog` recuerda que la organización no es una clasificación de diccionario. Algo parecido ocurre con `spoon`: sus vecinos entrenados incluyen `fork` (0,5153), `pan`, `cup` y `bowl`, junto con objetos como `wand` y `pen`. Una explicación posible es que compartan acciones o posiciones dentro de las narraciones, además de categorías de objetos.
+
+Para `happy` aparecen `glad` (0,5232), `relieved` y `excited`; para `sad`, `upset` (0,6575), `frustrated` y `miserable`. A la vez, `sad` queda séptimo entre los vecinos de `happy`. No lo leemos como una confusión entre alegría y tristeza: los antónimos pueden ocupar contextos parecidos, por ejemplo al describir cómo se siente un personaje. **La cercanía distribucional no equivale a sinonimia.** Es una explicación compatible con los resultados; para comprobar los contextos concretos tendríamos que inspeccionar ocurrencias del corpus.
+
+El cuarto histograma explica por qué incluso el modelo inicial tiene vecinos con cosenos que parecen altos. Para un par fijado antes de mirar, la escala orientativa es `1/√256 = 0,0625`. Pero al buscar el máximo entre 5.965 candidatos, seleccionamos un extremo: en las 512 consultas iniciales, la mediana de esos máximos es 0,229 y su percentil 95 es 0,266. Un vecino inicial con coseno cercano a 0,2 puede surgir por esa búsqueda entre miles de opciones; por sí solo no acredita aprendizaje. Los cosenos finales de nuestros dos pares relacionados superan ampliamente esas referencias iniciales y también el percentil 99 de los cosenos entrenados de control (0,304).
+
+Usamos todos estos percentiles como **referencias descriptivas**, no como p-valores ni pruebas concluyentes de significado. Los controles pueden compartir palabras y algunos también pueden estar relacionados. La evidencia más convincente para nosotros es la coincidencia entre cambios grandes frente a los controles y vecinos que podemos interpretar, con esas limitaciones.
+
+### 2. ¿Qué cambió en la proyección 2D?
+
+En el panel inicial vemos una nube compacta, con las consultas repartidas sin una separación temática clara. En el panel entrenado la nube ocupa una región más amplia y los pares relacionados se acercan visiblemente: `dog` y `cat` casi se superponen en la parte superior izquierda, mientras que `happy` y `sad` quedan próximos en la zona inferior. `spoon` queda separado de esos pares. Esa lectura coincide, para los pares relacionados, con el aumento de coseno medido en las 256 dimensiones.
+
+La comparación es útil porque proyectamos las mismas 500 palabras con **una PCA ajustada conjuntamente** sobre ambos estados. Así, los ejes representan las mismas direcciones; dos PCA independientes podrían rotar las vistas de manera distinta. Compartir límites y escala también evita que un cambio de zoom explique la mayor dispersión aparente. Como usamos vectores normalizados, esa dispersión en el plano tampoco se debe simplemente a que hayan aumentado sus normas.
+
+El límite es importante: la PC1 explica el 3,55 % de la varianza, la PC2 el 2,05 % y el total guardado, calculado antes del redondeo, es **5,61 %**. El 94,39 % restante es variación omitida por estos dos ejes, no una cantidad medible de «significado perdido». La PCA selecciona direcciones de variación, no mide cuánto significado contiene cada una. Además, ese porcentaje corresponde a la muestra conjunta utilizada, no a una medición de todo el vocabulario.
+
+Por eso no concluimos que el gráfico revele todos los grupos semánticos ni que sus distancias reproduzcan las originales. La mayor dispersión en estos ejes tampoco demuestra por sí sola que todos los tokens se hayan alejado entre sí. Usamos la figura para explorar y los cosenos originales para sostener la comparación cuantitativa.
+
+### 3. ¿Qué cambia al filtrar palabras?
+
+El filtro reduce el vocabulario de 8.192 tokens a 5.966 candidatos que empiezan con `Ġ` y continúan con letras. La consulta sigue siendo la misma fila `Ġpalabra`; lo que cambia es el conjunto donde buscamos sus diez vecinos. **Sin filtrar**, la proporción de vecinos que pasa el criterio es:
+
+| Consulta | Inicial | Entrenado |
+|---|---:|---:|
+| `dog` | 70 % | 100 % |
+| `cat` | 60 % | 100 % |
+| `happy` | 90 % | 100 % |
+| `sad` | 80 % | 100 % |
+| `spoon` | 90 % | 100 % |
+
+Al inicio, filtrar hace las listas más legibles: elimina, por ejemplo, `ving` y `ee` entre los vecinos de `dog`, y `onies` y `sm` entre los de `cat`. Después del entrenamiento, los diez vecinos de cada una de estas cinco consultas ya pasan el filtro, de modo que ambas búsquedas devuelven las mismas listas. Esto sugiere una organización local más interpretable para **estas consultas observadas**; no demuestra que ocurra en todo el vocabulario ni que los fragmentos carezcan de información. El 100 % de las listas filtradas, en cambio, está garantizado por la selección y no es un resultado de aprendizaje.
+
+Llamar «palabras enteras» a los candidatos es una simplificación operativa. `ĠBu`, presente entre los vecinos iniciales de `dog`, pasa el filtro aunque puede ser un comienzo de palabra; el criterio no verifica una entrada de diccionario ni su uso en contexto. Además, ampliar los candidatos puede cambiar los mejores vecinos por el propio tamaño de la búsqueda, sin que haya cambiado ningún embedding.
+
+El ejemplo `Ġday` frente a `day` muestra otro límite: tienen IDs distintos, 356 y 1112, y solo el primero pasa el filtro. El marcador `Ġ` representa un espacio previo en esta tokenización; la fila sin marcador puede corresponder a otras posiciones o fragmentos. Su coseno pasa de −0,136445 a 0,163688: no son vectores intercambiables pese a compartir las letras. Mantener los IDs evita consultar otra fila al quitar el marcador. No medimos sus frecuencias de uso, así que no podemos afirmar que una variante apareció menos ni que quedó sin entrenar.
+
+### 4. Si el espacio siguiera pareciéndose al inicial, ¿qué cambiaríamos y cuánto costaría?
+
+En esta corrida **sí observamos cambios** en los cosenos, los vecinos y la proyección. Aun así, estudiamos embeddings estáticos de una sola corrida: cada token tiene aquí un vector fijo, mientras que las capas posteriores construyen representaciones que dependen del contexto. Un resultado débil en esta tabla no demostraría por sí solo ausencia de aprendizaje en todo el modelo.
+
+Si la evidencia siguiera siendo débil, primero revisaríamos que estemos comparando los checkpoints correctos y las mismas filas del tokenizador. Después consideraríamos las siguientes alternativas, como **experimentos futuros que no realizamos en esta etapa**:
+
+- **Más pasos con la misma configuración y datos:** permitirían comprobar si faltó entrenamiento, a costa de más cómputo y posible sobreajuste. Miraríamos la pérdida de validación junto con los cambios de embeddings.
+- **Más datos pertinentes y diversos, manteniendo el tokenizador:** permitirían probar una cobertura mayor de usos, con costos de preparación, tokenización, almacenamiento y entrenamiento. Más variedad no garantiza mejorar estas relaciones; también puede cambiar qué contextos predominan.
+- **Otra dimensión de embedding:** permitiría estudiar si la capacidad limita las representaciones, pero cambia parámetros, memoria y costo por paso. Una dimensión mayor no garantiza una mejora y modifica la escala de ruido `1/√d`, por lo que no reutilizaríamos los umbrales de esta corrida.
+- **Otras semillas con la misma configuración:** servirían para evaluar robustez, no para prometer mejores vecinos. Su costo es repetir entrenamientos y análisis.
+
+Cambiaríamos una variable por vez y conservaríamos una referencia del paso 0 para cada nueva corrida. Mantendríamos consultas y criterios de evaluación, recalcularíamos controles y registraríamos tiempo, memoria y validación. Así podríamos distinguir una mejora reproducible de una diferencia propia de la inicialización o de la medición.
+
+## 8 · Decisiones, diseño y reflexión del grupo
+
+### Qué nos permite el recorte realizado
+
+| Decisión | Ventaja para esta pregunta | Límite de la decisión |
+|---|---|---|
+| Reutilizar el modelo ancho de la Etapa 2 | Conecta el análisis con un modelo ya entrenado y permite inspeccionar su tabla sin entrenar otro. | Las conclusiones corresponden a esa configuración y corrida; no permiten atribuir el resultado al ancho ni compararlo con otras arquitecturas. |
+| Comparar el paso 0 con el 5.000 | Contrasta la inicialización con un estado entrenado que, aquí, coincide con la mejor validación registrada. | Dos puntos no muestran cuándo surgieron las relaciones ni garantizan que 5.000 sea el óptimo fuera del historial disponible. |
+| Leer la tabla en CPU | Evita reconstruir y ejecutar el Transformer para calcular cosenos y PCA; facilita volver a inspeccionar los artefactos. | No evalúa generación ni representaciones contextuales. Es una ventaja del análisis elegido, no evidencia de una restricción histórica de hardware. |
+| Normalizar los vectores | Permite comparar direcciones con similitud coseno sin que domine la magnitud de cada fila. | Dejamos fuera los posibles cambios de norma; describimos una parte de la geometría aprendida. |
+| Usar los mismos controles y consultas | Hace comparables los cambios y evita que una nueva selección explique las diferencias entre estados. | Los pares aleatorios no son una muestra de relaciones garantizadas como «sin significado» y las cinco consultas cubren pocos casos. |
+
+Estas son las ventajas y los costos conceptuales del recorte que podemos defender con los artefactos. No necesitamos atribuirlo a falta de tiempo o de GPU que este notebook no documenta.
+
+### Qué pusimos a prueba
+
+Nuestra hipótesis era que `dog–cat` compartiría usos como animales y personajes, y `happy–sad` como estados emocionales, mientras que `dog–spoon` resultaría menos similar. Los pares estaban fijados antes de observar las salidas. Mantuvimos el tokenizador y sus IDs, la arquitectura, la dimensión, las consultas, los controles y los criterios de análisis. Para la figura mantuvimos también la muestra de palabras y los ejes conjuntos. Lo que comparamos son los pesos de la tabla antes y después del preentrenamiento; durante ese proceso también aprendieron los demás parámetros del modelo, que aquí no analizamos.
+
+Medimos cosenos, cambios de coseno y diez vecinos, con pares aleatorios y máximos iniciales como referencias distintas. La PCA agrega una vista exploratoria. Esta comparación sostiene que las relaciones observadas cambiaron durante el entrenamiento, pero no identifica qué cuentos, frecuencias o mecanismos causaron cada cercanía.
+
+La comparación supone que los dos checkpoints y el tokenizador pertenecen a la misma corrida. Lo respaldan dos cosas: las configuraciones de modelo y de entrenamiento coinciden, y los dos checkpoints llevan la misma huella SHA-1 del tokenizador, que es la de `checkpoints/tokenizer.json`. Lo que no guardan es la semilla: la 1337 que imprime este notebook fija el muestreo del análisis y no certifica por sí sola la inicialización del entrenamiento (la Etapa 2 la fija en su código, con `torch.manual_seed(SEED)` antes de construir cada modelo).
+
+### De las unidades del tokenizador a las capacidades del modelo
+
+La conexión entre las tres primeras etapas se ve en las filas que analizamos. **El tokenizador define las unidades y el preentrenamiento modifica sus relaciones.** Tener `Ġdog` y `Ġcat` como tokens permite comparar directamente sus vectores; otras palabras pueden quedar repartidas en fragmentos. El caso de `Ġday` y `day` muestra por qué no podemos hablar de «la representación de una palabra» sin precisar qué token consultamos. Al aprender a predecir continuaciones, el modelo puede acercar unidades que aparecen en usos parecidos; nuestros vecinos son evidencia compatible con ese proceso, no una inspección directa de todos esos usos.
+
+Nuestra reflexión central es que **reconocer relaciones entre palabras no garantiza sostener un cuento coherente ni seguir instrucciones**. Que `dog` esté cerca de `cat` ayuda a interpretar una relación local, pero no dice si el modelo mantendrá al mismo animal como protagonista, recordará qué hizo ni cerrará la historia sin contradicciones. Del mismo modo, que `happy` tenga vecinos emocionales no demuestra que el modelo vaya a incluir esa palabra cuando se la pedimos: debe usar la instrucción y el contexto al generar una secuencia.
 """

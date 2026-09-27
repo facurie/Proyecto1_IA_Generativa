@@ -1,9 +1,10 @@
 """
 Convierte un `.py` con marcadores de celda `# %%` en un `.ipynb` de verdad.
 
-    python tools/py_to_notebook.py                  # regenerar todas las etapas
+    python tools/py_to_notebook.py                  # regenerar todas las etapas, conservando salidas
     python tools/py_to_notebook.py --check           # fallar si algún .ipynb quedó desactualizado
     python tools/py_to_notebook.py --only 02_pretraining
+    python tools/py_to_notebook.py --limpiar         # regenerar SIN salidas (notebook sin ejecutar)
     python tools/py_to_notebook.py --bootstrap-only   # actualizar solo el arranque; conservar salidas
     python tools/py_to_notebook.py --source foo.py --destination foo.ipynb
 
@@ -13,6 +14,15 @@ El `.py` es la fuente EDITABLE: diffea limpio en git, se puede grepear normalmen
 no arrastra metadata ni salidas viejas. El `.ipynb` es el ARTEFACTO que abrís
 y ejecutás. Editar el `.py` y regenerar es muchísimo más sano que editar
 JSON a mano.
+
+SALIDAS DE UN NOTEBOOK YA EJECUTADO
+-----------------------------------
+Los `.ipynb` de la entrega van ejecutados, con sus salidas. Regenerar conserva, celda por celda,
+las salidas de cada celda de código cuyo código NO cambió (y los ids y la metadata del notebook):
+así se puede corregir o ampliar el markdown del `.py` sin volver a correr una etapa de horas. Una
+celda de código que sí cambió queda sin salidas, y el script lo avisa: esa etapa hay que volver a
+ejecutarla. `--limpiar` descarta todas las salidas. `--check` compara solo el tipo y el texto de
+cada celda, así que un notebook ejecutado que está al día con su `.py` pasa el chequeo.
 
 (VS Code también puede abrir el `.py` directamente como notebook interactivo, así que si
 con eso te alcanza, este script es opcional.)
@@ -42,6 +52,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import re
 import sys
@@ -225,6 +236,69 @@ def build_notebook(cells: list[tuple[str, str]]) -> dict:
     }
 
 
+def _cell_sources(nb: dict) -> list[tuple[str, str]]:
+    """Lo que define el contenido de un notebook para `--check`: tipo y texto de cada celda."""
+    return [(cell["cell_type"], "".join(cell["source"])) for cell in nb["cells"]]
+
+
+def _dump(nb: dict) -> str:
+    """Mismo formato que `nbformat.write` (claves ordenadas), para que git diffee solo lo que cambió."""
+    return json.dumps(nb, sort_keys=True, ensure_ascii=False, indent=1) + "\n"
+
+
+def carry_over(nb: dict, previous: dict) -> tuple[int, str | None, int]:
+    """
+    Copia a `nb`, recién generado desde el `.py`, lo que ya tenía la versión ejecutada del notebook:
+    las salidas y el número de ejecución de cada celda de código cuyo código no cambió, el id de las
+    celdas que siguen iguales y la metadata del notebook (kernel, versión de Python).
+
+    Las salidas se copian solo mientras las celdas de código coinciden, en orden, con las del
+    notebook ejecutado. Desde la primera celda de código nueva, cambiada, borrada o movida, ninguna
+    conserva salidas: las celdas siguientes corren sobre el estado que deja esa, así que sus salidas
+    viejas podrían no corresponder al código nuevo.
+
+    Devuelve cuántas celdas conservaron salidas, el comienzo de la primera celda de código que dejó
+    de coincidir (o None) y cuántas celdas de código quedaron sin salidas desde ahí.
+    """
+    source = lambda cell: "".join(cell["source"])  # noqa: E731
+    old_code = [cell for cell in previous.get("cells", []) if cell["cell_type"] == "code"]
+    by_content: dict[tuple[str, str], list[dict]] = {}
+    for cell in previous.get("cells", []):
+        by_content.setdefault((cell["cell_type"], source(cell)), []).append(cell)
+
+    # Ids: se conserva el de cada celda que sigue igual; las nuevas reciben uno estable, derivado del
+    # contenido, así regenerar dos veces el mismo `.py` no cambia nada.
+    reused = [(by_content.get((cell["cell_type"], source(cell))) or [None]).pop(0) for cell in nb["cells"]]
+    old_ids = {old["id"] for old in reused if old is not None and old.get("id")}
+    taken: set[str] = set()
+    for cell, old in zip(nb["cells"], reused):
+        if old is not None and old.get("id") and old["id"] not in taken:
+            cell["id"] = old["id"]
+        else:
+            digest = hashlib.sha1(f"{cell['cell_type']}|{source(cell)}".encode()).hexdigest()[:8]
+            cell["id"], n = f"cell-{digest}", 2
+            while cell["id"] in taken or cell["id"] in old_ids:
+                cell["id"], n = f"cell-{digest}-{n}", n + 1
+        taken.add(cell["id"])
+
+    code_cells = [cell for cell in nb["cells"] if cell["cell_type"] == "code"]
+    same = 0
+    while same < min(len(code_cells), len(old_code)) and source(code_cells[same]) == source(old_code[same]):
+        same += 1
+    kept = 0
+    for cell, old in zip(code_cells[:same], old_code):
+        cell["execution_count"] = old.get("execution_count")
+        cell["outputs"] = old.get("outputs", [])
+        cell["metadata"] = old.get("metadata", {})
+        kept += bool(cell["outputs"])
+    first_changed = None
+    if same < len(code_cells):
+        first_changed = source(code_cells[same]).splitlines()[0][:70] if code_cells[same]["source"] else "(vacía)"
+
+    nb["metadata"] = previous.get("metadata") or nb["metadata"]
+    return kept, first_changed, len(code_cells) - same
+
+
 def update_bootstrap(destination: Path, check: bool) -> bool:
     """Actualiza solo la primera celda de un notebook ejecutado, sin tocar sus resultados."""
     if not destination.is_file():
@@ -249,13 +323,16 @@ def update_bootstrap(destination: Path, check: bool) -> bool:
     first["execution_count"] = None
     first["outputs"] = []
     first["metadata"] = {}
-    destination.write_text(json.dumps(nb, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    destination.write_text(_dump(nb), encoding="utf-8")
     print(f"arranque actualizado: {destination.name}; otras celdas y salidas conservadas.")
     return True
 
 
-def convert_one(source: Path, destination: Path, check: bool) -> bool:
-    """Devuelve True si salió bien (o si el --check coincide limpio), False si falló."""
+def convert_one(source: Path, destination: Path, check: bool, clean: bool = False) -> bool:
+    """
+    Devuelve True si salió bien (o si el --check coincide limpio), False si falló. Sin `clean`, si el
+    destino ya existe, conserva las salidas de las celdas de código que no cambiaron (`carry_over`).
+    """
     if not source.is_file():
         print(f"falta la fuente: {source}")
         return False
@@ -273,7 +350,6 @@ def convert_one(source: Path, destination: Path, check: bool) -> bool:
     cells = [("code", BOOTSTRAP_CELL.rstrip("\n"))] + cells
 
     nb = build_notebook(cells)
-    new_json = json.dumps(nb, ensure_ascii=False, indent=1) + "\n"
 
     n_md = sum(1 for k, _ in cells if k == "markdown")
     n_code = len(cells) - n_md
@@ -282,7 +358,8 @@ def convert_one(source: Path, destination: Path, check: bool) -> bool:
         if not destination.is_file():
             print(f"FALTA {destination.name}: ejecutá el script sin --check.")
             return False
-        if destination.read_text(encoding="utf-8") != new_json:
+        # Solo el texto de las celdas: las salidas de un notebook ejecutado no son un desfasaje.
+        if _cell_sources(json.loads(destination.read_text(encoding="utf-8"))) != _cell_sources(nb):
             print(f"{destination.name} está DESACTUALIZADO respecto de {source.name}. Ejecutá sin --check.")
             return False
         if URL_PLACEHOLDER in REPO_URL:
@@ -294,9 +371,20 @@ def convert_one(source: Path, destination: Path, check: bool) -> bool:
         print(f"OK: {destination.name} coincide con {source.name} ({len(cells)} celdas).")
         return True
 
-    destination.write_text(new_json, encoding="utf-8")
+    kept, first_changed, dropped, was_executed = 0, None, 0, False
+    if destination.is_file() and not clean:
+        previous = json.loads(destination.read_text(encoding="utf-8"))
+        was_executed = any(cell.get("outputs") for cell in previous.get("cells", []))
+        kept, first_changed, dropped = carry_over(nb, previous)
+
+    destination.write_text(_dump(nb), encoding="utf-8")
     print(f"escrito: {destination}")
     print(f"  celdas: {len(cells)}  ({n_code} de código, {n_md} de markdown)")
+    if kept:
+        print(f"  salidas conservadas: {kept} celdas de código")
+    if was_executed and first_changed is not None:
+        print(f"  ATENCIÓN: el código cambió desde la celda que empieza con {first_changed!r}; desde ahí,"
+              f" {dropped} celda(s) de código quedaron sin salidas. Volvé a ejecutar el notebook.")
     print(f"  tamaño: {destination.stat().st_size:,} bytes")
     return True
 
@@ -307,6 +395,8 @@ def main() -> int:
                     help="no escribir; fallar si algún .ipynb no coincide con su .py")
     ap.add_argument("--bootstrap-only", action="store_true",
                     help="actualizar/comprobar solo la primera celda sin borrar resultados ejecutados")
+    ap.add_argument("--limpiar", action="store_true",
+                    help="regenerar sin salidas, aunque el .ipynb ya esté ejecutado")
     ap.add_argument("--only", type=str, default=None,
                     help="restringir a una sola etapa por su stem, p. ej. 02_pretraining")
     ap.add_argument("--source", type=Path, default=None,
@@ -319,7 +409,7 @@ def main() -> int:
         if args.bootstrap_only:
             ok = update_bootstrap(destination, args.check)
         else:
-            ok = convert_one(args.source, destination, args.check)
+            ok = convert_one(args.source, destination, args.check, clean=args.limpiar)
         return 0 if ok else 1
 
     pairs = STAGES.items() if args.only is None else {args.only: STAGES[args.only]}.items()
@@ -331,7 +421,7 @@ def main() -> int:
             continue  # etapa todavía no escrita -- no todas las etapas existen en todo momento de la construcción
         any_found = True
         result = (update_bootstrap(destination, args.check) if args.bootstrap_only
-                  else convert_one(source, destination, args.check))
+                  else convert_one(source, destination, args.check, clean=args.limpiar))
         all_ok = result and all_ok
 
     if not any_found:

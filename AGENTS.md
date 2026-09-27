@@ -15,7 +15,7 @@ python verify_setup.py
 python tools/py_to_notebook.py --check
 ```
 
-Activate `.venv` before installing dependencies. `verify_setup.py` checks packages, device setup, and Hugging Face Hub access; it needs a network connection. The notebook check reports `.ipynb` files that differ from their `.py` sources. After changing a stage, run `python tools/py_to_notebook.py --only 01_tokenizer` (substitute the stage name) to regenerate its notebook. Run stages from the root so relative `checkpoints/` paths resolve. Colab with a T4 GPU is the target for full training.
+Activate `.venv` before installing dependencies. `verify_setup.py` checks packages, device setup, and Hugging Face Hub access; it needs a network connection. The notebook check reports `.ipynb` files whose cells differ from their `.py` sources (outputs are ignored). After changing a stage, run `python tools/py_to_notebook.py --only 01_tokenizer` (substitute the stage name) to regenerate its notebook; regeneration keeps the outputs of code cells whose source did not change, and warns about the ones that need re-running (`--limpiar` drops all outputs). Run stages from the root so relative `checkpoints/` paths resolve. Colab with a T4 GPU is the target for full training.
 
 ## Coding Style & Naming Conventions
 
